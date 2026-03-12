@@ -1526,13 +1526,41 @@ export default function Landing() {
           </div>
         </div>
 
+        {/* SEO Content */}
+        <div style={{ padding: "32px 0 16px" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: C.t1, fontFamily: "'Sora', sans-serif", marginBottom: 12 }}>Simuladores Financieros Gratuitos para México</h2>
+          <p style={{ fontSize: 13, color: C.t3, lineHeight: 1.7, marginBottom: 16 }}>
+            Arquitecto Financiero te ofrece calculadoras gratuitas para que descubras cuánto pagarás realmente por tu crédito hipotecario, tu crédito automotriz, tu crédito Infonavit o tu tarjeta de crédito. Simula abonos a capital, bonos extraordinarios como tu aguinaldo o PTU, compara tasas de interés entre bancos y calcula si tu casa es negocio o pérdida con la plusvalía.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏠 Simulador de Hipoteca y Auto</h3>
+              <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Calcula el costo real de tu crédito hipotecario o automotriz. Ve cuánto pagas de intereses vs capital cada mes. Simula abonos extra y descubre cuántos años y pesos te puedes ahorrar.</p>
+            </div>
+            <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏗️ Simulador Crédito Infonavit</h3>
+              <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Para créditos Infonavit en pesos del 2017 en adelante. Ingresa tu tasa fija, monto y plazo real de tu tabla de amortización. Compara cuánto ahorras vs un banco comercial.</p>
+            </div>
+            <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>💳 Simulador Tarjeta de Crédito</h3>
+              <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Descubre cuánto te va a costar pagar solo el mínimo de tu tarjeta. Compara con un pago fijo mensual y ve cuántos años y pesos te ahorras. Escenarios con tasas del 25% al 65%.</p>
+            </div>
+            <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🚀 Calculadora de Interés Compuesto</h3>
+              <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Calcula cuánto dinero puedes acumular ahorrando mensualmente. Planea tu retiro: descubre cuánto necesitas ahorrar para recibir el ingreso mensual que quieras a los 60 años.</p>
+            </div>
+          </div>
+          <p style={{ fontSize: 12, color: C.t3, lineHeight: 1.6 }}>
+            Todas las herramientas son 100% gratuitas, sin registro y sin compartir datos personales. Los cálculos se realizan en tu dispositivo con sistema de amortización francés, el estándar en México. Para decisiones financieras importantes, consulta a un asesor certificado.
+          </p>
+        </div>
+
         {/* Footer */}
         <div style={{ textAlign: "center", padding: "20px 0 40px", borderTop: `1px solid ${C.border}`, marginTop: 20 }}>
           <p style={{ fontSize: 11, color: C.t3 }}>Arquitecto Financiero © 2026 · Diseña tus finanzas para un mejor futuro</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: C.t3 }}>📱 TikTok</span>
-            <span style={{ fontSize: 11, color: C.t3 }}>📸 Instagram</span>
-            <span style={{ fontSize: 11, color: C.t3 }}>▶️ YouTube</span>
+            <a href="https://www.tiktok.com/@arquitecto.financ" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.t3, textDecoration: "none" }}>📱 TikTok</a>
+            <a href="https://www.instagram.com/arquitecto_financiero" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.t3, textDecoration: "none" }}>📸 Instagram</a>
           </div>
         </div>
       </div>
