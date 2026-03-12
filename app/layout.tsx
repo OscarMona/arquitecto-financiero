@@ -37,14 +37,3 @@ export default function RootLayout({
     </html>
   );
 }
-```
-
-**Ctrl + S**. Después en la terminal:
-```
-git add .
-```
-```
-git commit -m "Google Analytics activado"
-```
-```
-git push
