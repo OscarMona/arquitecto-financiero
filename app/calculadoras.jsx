@@ -194,7 +194,7 @@ function SimuladorCredito({ mob }) {
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
           {stepLabels.map((s, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, flex: i < stepLabels.length - 1 ? 1 : "none" }}>
-              <button onClick={() => i <= step ? setStep(i) : null} style={{
+              <button onClick={() => { if(i <= step) { setStep(i); window.scrollTo({top: 0, behavior: "smooth"}); } }} style={{
                 width: 26, height: 26, borderRadius: "50%", border: "none", cursor: i <= step ? "pointer" : "default",
                 background: i < step ? C.accent : i === step ? C.accent + "30" : C.border,
                 color: i < step ? "#000" : i === step ? C.accent : C.t3, fontSize: 10, fontWeight: 700,
@@ -267,8 +267,8 @@ function SimuladorCredito({ mob }) {
             )}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18 }}>
-            <button onClick={() => setStep(0)} style={{ padding: "10px 20px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 13 }}>← Atrás</button>
-            <button onClick={() => setStep(2)} disabled={!(p.monto > 0 && p.tasa > 0 && p.plazo > 0)} style={{
+            <button onClick={() => { setStep(0); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "10px 20px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 13 }}>← Atrás</button>
+            <button onClick={() => { setStep(2); window.scrollTo({top: 0, behavior: "smooth"}); }} disabled={!(p.monto > 0 && p.tasa > 0 && p.plazo > 0)} style={{
               padding: "10px 24px", borderRadius: 8, border: "none", cursor: p.monto > 0 && p.tasa > 0 && p.plazo > 0 ? "pointer" : "default",
               background: p.monto > 0 && p.tasa > 0 && p.plazo > 0 ? C.accent : C.border, color: p.monto > 0 && p.tasa > 0 && p.plazo > 0 ? "#000" : C.t3, fontSize: 14, fontWeight: 700,
             }}>Siguiente →</button>
@@ -305,8 +305,8 @@ function SimuladorCredito({ mob }) {
             </div>
           )}
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18 }}>
-            <button onClick={() => setStep(1)} style={{ padding: "10px 20px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 13 }}>← Atrás</button>
-            <button onClick={() => setStep(3)} style={{ padding: "10px 24px", borderRadius: 8, border: "none", cursor: "pointer", background: C.accent, color: "#000", fontSize: 14, fontWeight: 700 }}>Ver mi realidad 🔍</button>
+            <button onClick={() => { setStep(1); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "10px 20px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 13 }}>← Atrás</button>
+            <button onClick={() => { setStep(3); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "10px 24px", borderRadius: 8, border: "none", cursor: "pointer", background: C.accent, color: "#000", fontSize: 14, fontWeight: 700 }}>Ver mi realidad 🔍</button>
           </div>
         </Card>
       )}
@@ -314,7 +314,7 @@ function SimuladorCredito({ mob }) {
       {/* STEP 3: Reality shock */}
       {step === 3 && tablaBase && (
         <div style={{ animation: "fadeIn 0.3s ease" }}>
-          <button onClick={() => setStep(2)} style={{ padding: "8px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 12, marginBottom: 14 }}>← Editar datos</button>
+          <button onClick={() => { setStep(2); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "8px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 12, marginBottom: 14 }}>← Editar datos</button>
 
           {/* Shock card */}
           <Card glow style={{ marginBottom: 16, background: `linear-gradient(135deg, ${C.card}, #1a0a0a)` }}>
@@ -420,7 +420,7 @@ function SimuladorCredito({ mob }) {
               <div style={{ fontSize: 28, marginBottom: 8 }}>💡</div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>¿Quieres mejorar estos números?</h3>
               <p style={{ fontSize: 13, color: C.t2, margin: "0 0 14px" }}>Simula abonos a capital, bonos extraordinarios, cambio de banco y compara la plusvalía</p>
-              <button onClick={() => setStep(4)} style={{ padding: "12px 28px", borderRadius: 10, border: "none", cursor: "pointer", background: C.accent, color: "#000", fontSize: 15, fontWeight: 700 }}>
+              <button onClick={() => { setStep(4); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "12px 28px", borderRadius: 10, border: "none", cursor: "pointer", background: C.accent, color: "#000", fontSize: 15, fontWeight: 700 }}>
                 Mejorar mi crédito →
               </button>
             </div>
@@ -436,7 +436,7 @@ function SimuladorCredito({ mob }) {
       {/* STEP 4: Improve */}
       {step === 4 && tablaBase && (
         <div style={{ animation: "fadeIn 0.3s ease" }}>
-          <button onClick={() => setStep(3)} style={{ padding: "8px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 12, marginBottom: 14 }}>← Ver mi situación actual</button>
+          <button onClick={() => { setStep(3); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{ padding: "8px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t3, cursor: "pointer", fontSize: 12, marginBottom: 14 }}>← Ver mi situación actual</button>
 
           {/* Abonos extra */}
           <Card style={{ marginBottom: 16 }}>
@@ -496,6 +496,21 @@ function SimuladorCredito({ mob }) {
                   <div><div style={{ fontSize: 26, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace" }}>{tablaMejora.mesesAh} meses</div><div style={{ fontSize: 11, color: C.t2 }}>{Math.round(tablaMejora.mesesAh / 12)} años menos</div></div>
                 </div>
               </div>
+              <div style={{ marginTop: 12, padding: 12, background: C.warning + "08", borderRadius: 10, border: `1px solid ${C.warning}22` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: C.t3 }}>Antes pagabas</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{fmt(tablaBase.mensualidadReal || tablaBase.pago)}</div>
+                    <div style={{ fontSize: 10, color: C.t3 }}>al mes</div>
+                  </div>
+                  <div style={{ fontSize: 20, color: C.warning }}>→</div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: C.warning }}>Ahora pagarás</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: C.warning }}>{fmt((tablaBase.mensualidadReal || tablaBase.pago) + p.extra)}</div>
+                    <div style={{ fontSize: 10, color: C.t3 }}>al mes ({fmt(tablaBase.mensualidadReal || tablaBase.pago)} + {fmt(p.extra)} extra)</div>
+                  </div>
+                </div>
+              </div>
             </Card>
           )}
 
@@ -549,8 +564,10 @@ function SimuladorCredito({ mob }) {
             const añosO = p.plazo / 12;
             const vfCon = p.valorCompra * Math.pow(1 + (p.plusvalia / 100), añosC);
             const vfSin = p.valorCompra * Math.pow(1 + (p.plusvalia / 100), añosO);
+            const vfConPlazoOrig = p.valorCompra * Math.pow(1 + (p.plusvalia / 100), añosO);
             const balSin = vfSin - tablaBase.totalPagadoOrig;
             const balCon = hasAbonos ? vfCon - tablaMejora.totalPagado : balSin;
+            const balConReal = hasAbonos ? vfConPlazoOrig - tablaMejora.totalPagado : balSin;
             const enganche = p.valorCompra - p.monto;
             return (
               <Card style={{ marginBottom: 16 }}>
@@ -566,7 +583,7 @@ function SimuladorCredito({ mob }) {
                   </div>
                   {hasAbonos && (
                     <div style={{ padding: 14, background: C.accent + "08", borderRadius: 12 }}>
-                      <div style={{ fontSize: 10, color: C.accent, fontWeight: 700, marginBottom: 10 }}>✅ CON ABONOS</div>
+                      <div style={{ fontSize: 10, color: C.accent, fontWeight: 700, marginBottom: 10 }}>✅ CON ABONOS (liquidando en {Math.round(añosC)} años)</div>
                       <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: C.t3 }}>Total pagado:</span><span style={{ color: C.accent, fontWeight: 600 }}>{fmt(tablaMejora.totalPagado + enganche)}</span></div>
                       <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ color: C.t3 }}>Valor en {Math.round(añosC)} años:</span><span style={{ color: C.accent, fontWeight: 600 }}>{fmt(vfCon)}</span></div>
                       <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
@@ -574,9 +591,20 @@ function SimuladorCredito({ mob }) {
                     </div>
                   )}
                 </div>
-                <div style={{ padding: 10, borderRadius: 8, background: (hasAbonos ? balCon : balSin) >= 0 ? C.accent + "10" : C.danger + "10", textAlign: "center" }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, margin: 0, color: (hasAbonos ? balCon : balSin) >= 0 ? C.accent : C.danger }}>
-                    {hasAbonos && balCon >= 0 && balSin < 0 ? "💡 Sin abonos sería pérdida. Con abonos, tu casa es inversión." : (hasAbonos ? balCon : balSin) >= 0 ? "✅ La plusvalía supera el costo del crédito." : "🔥 El crédito cuesta más de lo que valdrá. Abona a capital."}
+                {hasAbonos && (
+                  <div style={{ padding: 14, background: C.blue + "08", borderRadius: 12, marginBottom: 14, border: `1px solid ${C.blue}22` }}>
+                    <div style={{ fontSize: 10, color: C.blue, fontWeight: 700, marginBottom: 10 }}>📊 COMPARATIVA REAL — Con abonos pero al plazo original ({Math.round(añosO)} años)</div>
+                    <p style={{ fontSize: 11, color: C.t3, margin: "0 0 8px" }}>Pagas en {Math.round(añosC)} años, pero tu casa sigue ganando plusvalía hasta los {Math.round(añosO)} años</p>
+                    <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: C.t3 }}>Total pagado (con abonos):</span><span style={{ color: C.accent, fontWeight: 600 }}>{fmt(tablaMejora.totalPagado + enganche)}</span></div>
+                    <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ color: C.t3 }}>Valor de tu casa en {Math.round(añosO)} años:</span><span style={{ color: C.blue, fontWeight: 600 }}>{fmt(vfConPlazoOrig)}</span></div>
+                    <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
+                    <div style={{ fontSize: 14, display: "flex", justifyContent: "space-between", fontWeight: 800 }}><span style={{ color: C.t2 }}>Balance real:</span><span style={{ color: balConReal >= 0 ? C.accent : C.danger, fontSize: 18 }}>{balConReal >= 0 ? "+" : ""}{fmt(balConReal - enganche)}</span></div>
+                    <p style={{ fontSize: 11, color: C.accent, marginTop: 8, fontWeight: 600 }}>💡 Terminas de pagar en {Math.round(añosC)} años y los {Math.round(añosO - añosC)} años restantes tu casa sigue creciendo de valor sin que debas nada.</p>
+                  </div>
+                )}
+                <div style={{ padding: 10, borderRadius: 8, background: (hasAbonos ? balConReal : balSin) >= 0 ? C.accent + "10" : C.danger + "10", textAlign: "center" }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: 0, color: (hasAbonos ? balConReal : balSin) >= 0 ? C.accent : C.danger }}>
+                    {hasAbonos && balConReal >= 0 && balSin < 0 ? "💡 Sin abonos sería pérdida. Con abonos, tu casa es inversión." : (hasAbonos ? balConReal : balSin) >= 0 ? "✅ La plusvalía supera el costo del crédito." : "🔥 El crédito cuesta más de lo que valdrá. Abona a capital."}
                   </p>
                 </div>
                 <p style={{ fontSize: 10, color: C.t3, marginTop: 6, textAlign: "center" }}>* Plusvalía estimada, depende de ubicación y mercado.</p>
@@ -1289,7 +1317,7 @@ function SimuladorInfonavit({ mob }) {
             <div><PctInput label="Plusvalía anual (%)" type="number" step="0.5" value={p.plusvalia||""} onChange={e=>set("plusvalia",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Promedio 5-8%</p></div>
           </div>
         </div>
-        <div style={{display:"flex",justifyContent:"flex-end",marginTop:18}}><button onClick={()=>setStep(1)} disabled={!(p.monto>0&&p.tasa>0&&p.plazo>0)} style={{padding:"10px 24px",borderRadius:8,border:"none",cursor:p.monto>0&&p.tasa>0&&p.plazo>0?"pointer":"default",background:p.monto>0&&p.tasa>0&&p.plazo>0?C.accent:C.border,color:p.monto>0&&p.tasa>0&&p.plazo>0?"#000":C.t3,fontSize:14,fontWeight:700}}>Siguiente →</button></div>
+        <div style={{display:"flex",justifyContent:"flex-end",marginTop:18}}><button onClick={()=>{setStep(1);window.scrollTo({top:0,behavior:"smooth"});}} disabled={!(p.monto>0&&p.tasa>0&&p.plazo>0)} style={{padding:"10px 24px",borderRadius:8,border:"none",cursor:p.monto>0&&p.tasa>0&&p.plazo>0?"pointer":"default",background:p.monto>0&&p.tasa>0&&p.plazo>0?C.accent:C.border,color:p.monto>0&&p.tasa>0&&p.plazo>0?"#000":C.t3,fontSize:14,fontWeight:700}}>Siguiente →</button></div>
       </Card>)}
 
       {/* STEP 1: Situación */}
@@ -1299,14 +1327,14 @@ function SimuladorInfonavit({ mob }) {
         <p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>3 años = mes 36. Consulta en Mi Cuenta Infonavit.</p>
         {tablaBase&&(<div style={{marginTop:14,padding:12,background:C.accent+"08",borderRadius:10}}><p style={{fontSize:12,color:C.t2,margin:0}}>📊 Saldo: <strong style={{color:C.accent}}>{fmt(tablaBase.saldoActual)}</strong> · Faltan <strong style={{color:C.accent}}>{tablaBase.mesesRest} meses</strong> ({Math.round(tablaBase.mesesRest/12)} años)</p></div>)}
         <div style={{display:"flex",justifyContent:"space-between",marginTop:18}}>
-          <button onClick={()=>setStep(0)} style={{padding:"10px 20px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button>
-          <button onClick={()=>setStep(2)} style={{padding:"10px 24px",borderRadius:8,border:"none",cursor:"pointer",background:C.accent,color:"#000",fontSize:14,fontWeight:700}}>Ver mi realidad 🔍</button>
+          <button onClick={()=>{setStep(0);window.scrollTo({top:0,behavior:"smooth"});}} style={{padding:"10px 20px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button>
+          <button onClick={()=>{setStep(2);window.scrollTo({top:0,behavior:"smooth"});}} style={{padding:"10px 24px",borderRadius:8,border:"none",cursor:"pointer",background:C.accent,color:"#000",fontSize:14,fontWeight:700}}>Ver mi realidad 🔍</button>
         </div>
       </Card>)}
 
       {/* STEP 2: Reality */}
       {step===2&&tablaBase&&(<div style={{animation:"fadeIn 0.3s ease"}}>
-        <button onClick={()=>setStep(1)} style={{padding:"8px 16px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:12,marginBottom:14}}>← Editar</button>
+        <button onClick={()=>{setStep(1);window.scrollTo({top:0,behavior:"smooth"});}} style={{padding:"8px 16px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:12,marginBottom:14}}>← Editar</button>
         <Card glow style={{marginBottom:16,background:`linear-gradient(135deg, ${C.card}, #1a0a0a)`}}>
           <div style={{textAlign:"center",marginBottom:16}}>
             <p style={{fontSize:13,color:C.t3,margin:"0 0 4px"}}>Tu crédito Infonavit de</p>
@@ -1349,13 +1377,13 @@ function SimuladorInfonavit({ mob }) {
           {showAnual&&(<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr style={{borderBottom:`2px solid ${C.border}`}}>{["Año","Intereses","%","Capital","%",tablaBase.totalCostos>0?"Costos":null,"Total","Saldo"].filter(Boolean).map((h,i)=>(<th key={i} style={{padding:"8px 6px",textAlign:"right",color:C.t3,fontWeight:600,fontSize:9,textTransform:"uppercase",letterSpacing:1}}>{h}</th>))}</tr></thead><tbody>{tablaBase.resAnual.map(a=>(<tr key={a.año} style={{borderBottom:`1px solid ${C.border}22`,background:a.isPast?C.accent+"06":"transparent"}}><td style={{padding:"6px",textAlign:"right",fontWeight:600,color:C.t2}}>{a.año}{a.isPast?" ✓":""}</td><td style={{padding:"6px",textAlign:"right",color:C.danger,fontWeight:600}}>{fmt(a.intereses)}</td><td style={{padding:"6px",textAlign:"right"}}><span style={{background:a.pctInt>50?C.danger+"25":a.pctInt>30?C.warning+"20":C.accent+"20",color:a.pctInt>50?C.danger:a.pctInt>30?C.warning:C.accent,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{a.pctInt}%</span></td><td style={{padding:"6px",textAlign:"right",color:C.accent,fontWeight:600}}>{fmt(a.capital)}</td><td style={{padding:"6px",textAlign:"right"}}><span style={{background:C.accent+"20",color:C.accent,padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>{a.pctCap}%</span></td>{tablaBase.totalCostos>0&&<td style={{padding:"6px",textAlign:"right",color:C.warning}}>{fmt(a.costos)}</td>}<td style={{padding:"6px",textAlign:"right",fontWeight:600}}>{fmt(a.total)}</td><td style={{padding:"6px",textAlign:"right",color:C.cyan}}>{fmt(a.saldoFinal)}</td></tr>))}</tbody></table></div>)}
         </Card>
 
-        <Card style={{marginBottom:16,background:`linear-gradient(135deg, ${C.accent}08, ${C.card})`,border:`1px solid ${C.accent}22`}}><div style={{textAlign:"center"}}><div style={{fontSize:28,marginBottom:8}}>💡</div><h3 style={{fontSize:16,fontWeight:700,color:C.t1,margin:"0 0 6px"}}>¿Quieres liquidar antes?</h3><p style={{fontSize:13,color:C.t2,margin:"0 0 14px"}}>Infonavit NO cobra penalización por adelantar pagos</p><button onClick={()=>setStep(3)} style={{padding:"12px 28px",borderRadius:10,border:"none",cursor:"pointer",background:C.accent,color:"#000",fontSize:15,fontWeight:700}}>Simular abonos →</button></div></Card>
+        <Card style={{marginBottom:16,background:`linear-gradient(135deg, ${C.accent}08, ${C.card})`,border:`1px solid ${C.accent}22`}}><div style={{textAlign:"center"}}><div style={{fontSize:28,marginBottom:8}}>💡</div><h3 style={{fontSize:16,fontWeight:700,color:C.t1,margin:"0 0 6px"}}>¿Quieres liquidar antes?</h3><p style={{fontSize:13,color:C.t2,margin:"0 0 14px"}}>Infonavit NO cobra penalización por adelantar pagos</p><button onClick={()=>{setStep(3);window.scrollTo({top:0,behavior:"smooth"});}} style={{padding:"12px 28px",borderRadius:10,border:"none",cursor:"pointer",background:C.accent,color:"#000",fontSize:15,fontWeight:700}}>Simular abonos →</button></div></Card>
         <div style={{padding:"12px 14px",background:C.bg,borderRadius:10,border:`1px solid ${C.border}`}}><p style={{fontSize:10,color:C.t3,margin:0,lineHeight:1.6}}>⚠️ Simulación para créditos Infonavit en pesos con tasa fija. El plazo debe ser el de tu tabla de amortización. Consulta Mi Cuenta Infonavit para datos exactos.</p></div>
       </div>)}
 
       {/* STEP 3: Mejoras */}
       {step===3&&tablaBase&&(<div style={{animation:"fadeIn 0.3s ease"}}>
-        <button onClick={()=>setStep(2)} style={{padding:"8px 16px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:12,marginBottom:14}}>← Mi situación</button>
+        <button onClick={()=>{setStep(2);window.scrollTo({top:0,behavior:"smooth"});}} style={{padding:"8px 16px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:12,marginBottom:14}}>← Mi situación</button>
         <Card style={{marginBottom:16}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><span style={{fontSize:24}}>💪</span><div><h3 style={{fontSize:16,fontWeight:700,color:C.t1,margin:0}}>Abonos a capital</h3><p style={{fontSize:12,color:C.t3,margin:0}}>Sin penalización en Infonavit</p></div></div>
           <div style={{marginBottom:14}}><MoneyInput label="Abono extra fijo/mes" type="number" value={p.extra||""} onChange={e=>set("extra",e.target.value)} /></div>
           <h4 style={{fontSize:13,fontWeight:600,color:C.t2,margin:"0 0 8px"}}>🎯 Bonos extraordinarios</h4>
