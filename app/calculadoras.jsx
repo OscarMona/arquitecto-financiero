@@ -1,4 +1,3 @@
-"use client";
 import { useState, useMemo, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -13,7 +12,7 @@ const C = {
   gold: "#F5C842",
 };
 
-const fmt = (n: any) => {
+const fmt = (n) => {
   if (n == null || isNaN(n)) return "$0";
   const abs = Math.abs(n);
   if (abs >= 1000000) return `$${(n / 1000000).toFixed(2)}M`;
@@ -43,6 +42,57 @@ const Inp = ({ label, ...props }) => (
     }} onFocus={e => e.target.style.borderColor = C.accent} onBlur={e => e.target.style.borderColor = C.border} />
   </div>
 );
+
+const MoneyInput = ({ label, value, onChange, placeholder }) => {
+  const [focused, setFocused] = useState(false);
+  const [raw, setRaw] = useState("");
+  const display = focused ? raw : (value ? "$" + Math.round(parseFloat(value) || 0).toLocaleString("es-MX") : "");
+  return (
+    <div>
+      <label style={{ fontSize: 11, color: C.t3, display: "block", marginBottom: 4, fontWeight: 500 }}>{label}</label>
+      <input
+        type={focused ? "number" : "text"}
+        value={focused ? raw : display}
+        placeholder={placeholder || "$0"}
+        onFocus={e => { setFocused(true); setRaw(value ? String(value) : ""); }}
+        onBlur={e => { setFocused(false); }}
+        onChange={e => { setRaw(e.target.value); onChange && onChange(e); }}
+        style={{
+          width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8,
+          background: C.bg, border: `1px solid ${focused ? C.accent : C.border}`, color: C.t1, fontSize: 14,
+          outline: "none", fontWeight: 600, fontVariantNumeric: "tabular-nums",
+          transition: "border-color 0.2s",
+        }}
+      />
+    </div>
+  );
+};
+
+const PctInput = ({ label, value, onChange, step }) => {
+  const [focused, setFocused] = useState(false);
+  const [raw, setRaw] = useState("");
+  const display = focused ? raw : (value ? value + "%" : "");
+  return (
+    <div>
+      <label style={{ fontSize: 11, color: C.t3, display: "block", marginBottom: 4, fontWeight: 500 }}>{label}</label>
+      <input
+        type={focused ? "number" : "text"}
+        value={focused ? raw : display}
+        placeholder="0%"
+        step={step || "0.01"}
+        onFocus={e => { setFocused(true); setRaw(value ? String(value) : ""); }}
+        onBlur={e => { setFocused(false); }}
+        onChange={e => { setRaw(e.target.value); onChange && onChange(e); }}
+        style={{
+          width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8,
+          background: C.bg, border: `1px solid ${focused ? C.accent : C.border}`, color: C.t1, fontSize: 14,
+          outline: "none", fontWeight: 600, fontVariantNumeric: "tabular-nums",
+          transition: "border-color 0.2s",
+        }}
+      />
+    </div>
+  );
+};
 
 const ShockNumber = ({ label, value, color = C.danger, sub, icon }) => (
   <div style={{ textAlign: "center", padding: "16px 8px" }}>
@@ -190,12 +240,12 @@ function SimuladorCredito({ mob }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              <Inp label={tipo === "hipoteca" ? "¿De cuánto es tu crédito hipotecario?" : "¿De cuánto es tu crédito automotriz?"} type="number" value={p.monto || ""} onChange={e => set("monto", e.target.value)} />
+              <MoneyInput label={tipo === "hipoteca" ? "¿De cuánto es tu crédito hipotecario?" : "¿De cuánto es tu crédito automotriz?"} type="number" value={p.monto || ""} onChange={e => set("monto", e.target.value)} />
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>El monto que te prestó el banco</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div>
-                <Inp label="Tasa de interés anual (%)" type="number" step="0.01" value={p.tasa || ""} onChange={e => set("tasa", e.target.value)} />
+                <PctInput label="Tasa de interés anual (%)" type="number" step="0.01" value={p.tasa || ""} onChange={e => set("tasa", e.target.value)} />
                 <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Solo el interés, sin seguros</p>
               </div>
               <div>
@@ -206,11 +256,11 @@ function SimuladorCredito({ mob }) {
             {tipo === "hipoteca" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>
-                  <Inp label="¿Cuánto costó la propiedad?" type="number" value={p.valorCompra || ""} onChange={e => set("valorCompra", e.target.value)} />
+                  <MoneyInput label="¿Cuánto costó la propiedad?" type="number" value={p.valorCompra || ""} onChange={e => set("valorCompra", e.target.value)} />
                   <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Precio de venta (con enganche)</p>
                 </div>
                 <div>
-                  <Inp label="Plusvalía anual estimada (%)" type="number" step="0.5" value={p.plusvalia || ""} onChange={e => set("plusvalia", e.target.value)} />
+                  <PctInput label="Plusvalía anual estimada (%)" type="number" step="0.5" value={p.plusvalia || ""} onChange={e => set("plusvalia", e.target.value)} />
                   <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Promedio en México: 5-8%</p>
                 </div>
               </div>
@@ -242,7 +292,7 @@ function SimuladorCredito({ mob }) {
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Si llevas 3 años pagando = mes 36</p>
             </div>
             <div>
-              <Inp label="¿Cuánto pagas realmente al mes? (opcional)" type="number" value={p.pagoReal || ""} onChange={e => set("pagoReal", e.target.value)} />
+              <MoneyInput label="¿Cuánto pagas realmente al mes? (opcional)" type="number" value={p.pagoReal || ""} onChange={e => set("pagoReal", e.target.value)} />
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>
                 Mensualidad calculada solo con interés: {tablaBase ? fmt(tablaBase.pago) : "$0"}.
                 {tablaBase && tablaBase.costosAdicionales > 0 ? ` Diferencia de ${fmt(tablaBase.costosAdicionales)} = costos adicionales.` : " Incluye seguros y comisiones si los conoces."}
@@ -398,7 +448,7 @@ function SimuladorCredito({ mob }) {
               </div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <Inp label="Abono extra fijo cada mes" type="number" value={p.extra || ""} onChange={e => set("extra", e.target.value)} />
+              <MoneyInput label="Abono extra fijo cada mes" type="number" value={p.extra || ""} onChange={e => set("extra", e.target.value)} />
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Se aplica a partir del mes {p.mesActual} directo a capital</p>
             </div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: C.t2, margin: "0 0 8px" }}>🎯 Abonos extraordinarios (aguinaldo, PTU, bonos)</h4>
@@ -414,7 +464,7 @@ function SimuladorCredito({ mob }) {
             )}
             <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "80px 1fr 1fr auto", gap: 8, alignItems: "end" }}>
               <Inp label="Mes" type="number" value={newBono.mes} onChange={e => setNewBono(prev => ({ ...prev, mes: e.target.value }))} />
-              <Inp label="Monto" type="number" value={newBono.monto} onChange={e => setNewBono(prev => ({ ...prev, monto: e.target.value }))} />
+              <MoneyInput label="Monto" value={newBono.monto} onChange={e => setNewBono(prev => ({ ...prev, monto: e.target.value }))} />
               <Inp label="Concepto" value={newBono.desc} onChange={e => setNewBono(prev => ({ ...prev, desc: e.target.value }))} />
               <button onClick={addBono} disabled={!newBono.mes || !newBono.monto} style={{
                 padding: "10px 14px", borderRadius: 8, background: newBono.mes && newBono.monto ? C.accent : C.border,
@@ -468,7 +518,7 @@ function SimuladorCredito({ mob }) {
                     <p style={{ fontSize: 11, color: C.t3, margin: "0 0 4px" }}>Tu tasa actual</p>
                     <div style={{ padding: "10px 12px", background: C.danger + "15", borderRadius: 8, fontSize: 18, fontWeight: 800, color: C.danger, textAlign: "center" }}>{p.tasa}%</div>
                   </div>
-                  <Inp label="Nueva tasa anual (%)" type="number" step="0.01" value={nuevaTasa || ""} onChange={e => setNuevaTasa(parseFloat(e.target.value) || 0)} />
+                  <PctInput label="Nueva tasa anual (%)" type="number" step="0.01" value={nuevaTasa || ""} onChange={e => setNuevaTasa(parseFloat(e.target.value) || 0)} />
                 </div>
                 {tablaCambio && nuevaTasa > 0 && (
                   <div style={{ padding: 14, background: C.accent + "08", borderRadius: 10, border: `1px solid ${C.accent}22` }}>
@@ -696,10 +746,10 @@ function LibertadFinanciera({ mob }) {
           <Card style={{ marginBottom: 16 }}>
             <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "repeat(5,1fr)", gap: 10 }}>
               <Inp label="Tu edad" type="number" value={edad} onChange={e => setEdad(parseFloat(e.target.value) || 0)} />
-              <Inp label="Ahorro mensual" type="number" value={ahorroMes} onChange={e => setAhorroMes(parseFloat(e.target.value) || 0)} />
-              <Inp label="Rendimiento anual (%)" type="number" step="0.5" value={tasaAnual} onChange={e => setTasaAnual(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="Ahorro mensual" type="number" value={ahorroMes} onChange={e => setAhorroMes(parseFloat(e.target.value) || 0)} />
+              <PctInput label="Rendimiento anual (%)" type="number" step="0.5" value={tasaAnual} onChange={e => setTasaAnual(parseFloat(e.target.value) || 0)} />
               <Inp label="Años de inversión" type="number" value={años} onChange={e => setAños(parseFloat(e.target.value) || 0)} />
-              <Inp label="Inversión inicial" type="number" value={inicial || ""} onChange={e => setInicial(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="Inversión inicial" type="number" value={inicial || ""} onChange={e => setInicial(parseFloat(e.target.value) || 0)} />
             </div>
           </Card>
 
@@ -762,10 +812,10 @@ function LibertadFinanciera({ mob }) {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "repeat(5,1fr)", gap: 10 }}>
               <Inp label="Tu edad actual" type="number" value={edad} onChange={e => setEdad(parseFloat(e.target.value) || 0)} />
-              <Inp label="Ingreso mensual deseado" type="number" value={ingMeta} onChange={e => setIngMeta(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="Ingreso mensual deseado" type="number" value={ingMeta} onChange={e => setIngMeta(parseFloat(e.target.value) || 0)} />
               <Inp label="Edad de retiro" type="number" value={edadRetiro} onChange={e => setEdadRetiro(parseFloat(e.target.value) || 0)} />
-              <Inp label="Rendimiento anual (%)" type="number" step="0.5" value={tasaAnual} onChange={e => setTasaAnual(parseFloat(e.target.value) || 0)} />
-              <Inp label="Ya tienes ahorrado" type="number" value={inicial || ""} onChange={e => setInicial(parseFloat(e.target.value) || 0)} />
+              <PctInput label="Rendimiento anual (%)" type="number" step="0.5" value={tasaAnual} onChange={e => setTasaAnual(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="Ya tienes ahorrado" type="number" value={inicial || ""} onChange={e => setInicial(parseFloat(e.target.value) || 0)} />
             </div>
           </Card>
 
@@ -871,7 +921,7 @@ function LibertadFinanciera({ mob }) {
         )}
         <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "80px 1fr 1fr auto", gap: 8, alignItems: "end" }}>
           <Inp label="Mes" type="number" value={newBono.mes} onChange={e => setNewBono(prev => ({ ...prev, mes: e.target.value }))} />
-          <Inp label="Monto" type="number" value={newBono.monto} onChange={e => setNewBono(prev => ({ ...prev, monto: e.target.value }))} />
+          <MoneyInput label="Monto" value={newBono.monto} onChange={e => setNewBono(prev => ({ ...prev, monto: e.target.value }))} />
           <Inp label="Concepto" value={newBono.desc} onChange={e => setNewBono(prev => ({ ...prev, desc: e.target.value }))} />
           <button onClick={addBono} disabled={!newBono.mes || !newBono.monto} style={{
             padding: "10px 14px", borderRadius: 8, background: newBono.mes && newBono.monto ? C.accent : C.border,
@@ -1011,11 +1061,11 @@ function TarjetaCredito({ mob }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
-              <Inp label="¿Cuánto debes en total?" type="number" value={deuda} onChange={e => setDeuda(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="¿Cuánto debes en total?" type="number" value={deuda} onChange={e => setDeuda(parseFloat(e.target.value) || 0)} />
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Tu saldo actual o "pago para no generar intereses"</p>
             </div>
             <div>
-              <Inp label="¿Cuánto te pide de pago mínimo?" type="number" value={pagoMin} onChange={e => setPagoMin(parseFloat(e.target.value) || 0)} />
+              <MoneyInput label="¿Cuánto te pide de pago mínimo?" type="number" value={pagoMin} onChange={e => setPagoMin(parseFloat(e.target.value) || 0)} />
               <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>El mínimo que marca tu app · Es el {pctMin}% de tu deuda</p>
             </div>
           </div>
@@ -1033,7 +1083,7 @@ function TarjetaCredito({ mob }) {
             </div>
             {conoceTasa ? (
               <div>
-                <Inp label="Tasa de interés ordinaria anual (%)" type="number" step="0.5" value={tasa || ""} onChange={e => setTasa(parseFloat(e.target.value) || 0)} />
+                <PctInput label="Tasa de interés ordinaria anual (%)" type="number" step="0.5" value={tasa || ""} onChange={e => setTasa(parseFloat(e.target.value) || 0)} />
                 <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>La encuentras en tu estado de cuenta como "Tasa de interés ordinaria anual"</p>
               </div>
             ) : (
@@ -1042,7 +1092,7 @@ function TarjetaCredito({ mob }) {
           </div>
 
           <div>
-            <Inp label="¿Cuánto podrías pagar fijo al mes? (opcional)" type="number" value={pagoFijo || ""} onChange={e => setPagoFijo(parseFloat(e.target.value) || 0)} />
+            <MoneyInput label="¿Cuánto podrías pagar fijo al mes? (opcional)" type="number" value={pagoFijo || ""} onChange={e => setPagoFijo(parseFloat(e.target.value) || 0)} />
             <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Si en vez del mínimo pagaras una cantidad fija, ¿cuánto sería?</p>
           </div>
         </div>
@@ -1222,12 +1272,12 @@ function SimuladorInfonavit({ mob }) {
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><span style={{fontSize:24}}>🏗️</span><div><h3 style={{fontSize:16,fontWeight:700,color:C.t1,margin:0}}>Crédito Infonavit en pesos</h3><p style={{fontSize:12,color:C.t3,margin:0}}>Créditos del 2017 en adelante con tasa fija</p></div></div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <div><Inp label="Monto original del crédito" type="number" value={p.monto||""} onChange={e=>set("monto",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Lo que Infonavit te prestó</p></div>
-            <div><Inp label="Tasa de interés anual (%)" type="number" step="0.01" value={p.tasa||""} onChange={e=>set("tasa",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Viene en tu estado de cuenta (3.5% a 10.45%)</p></div>
+            <div><MoneyInput label="Monto original del crédito" type="number" value={p.monto||""} onChange={e=>set("monto",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Lo que Infonavit te prestó</p></div>
+            <div><PctInput label="Tasa de interés anual (%)" type="number" step="0.01" value={p.tasa||""} onChange={e=>set("tasa",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Viene en tu estado de cuenta (3.5% a 10.45%)</p></div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             <div><Inp label="Plazo (meses)" type="number" value={p.plazo||""} onChange={e=>set("plazo",e.target.value)} /><p style={{fontSize:10,color:C.warning,margin:"4px 0 0",fontWeight:600}}>⚠️ Usa el plazo de tu tabla de amortización, no el del contrato — a veces varía</p></div>
-            <div><Inp label="¿Cuánto te descuentan al mes?" type="number" value={p.pagoReal||""} onChange={e=>set("pagoReal",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>El descuento real de tu nómina</p></div>
+            <div><MoneyInput label="¿Cuánto te descuentan al mes?" type="number" value={p.pagoReal||""} onChange={e=>set("pagoReal",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>El descuento real de tu nómina</p></div>
           </div>
           {tablaBase&&p.pagoReal>0&&tablaBase.costosAd>0&&(
             <div style={{padding:10,background:C.warning+"10",borderRadius:8,border:`1px solid ${C.warning}22`}}>
@@ -1235,8 +1285,8 @@ function SimuladorInfonavit({ mob }) {
             </div>
           )}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <div><Inp label="Valor de compra de la vivienda (opcional)" type="number" value={p.valorCompra||""} onChange={e=>set("valorCompra",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Para calcular plusvalía</p></div>
-            <div><Inp label="Plusvalía anual (%)" type="number" step="0.5" value={p.plusvalia||""} onChange={e=>set("plusvalia",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Promedio 5-8%</p></div>
+            <div><MoneyInput label="Valor de compra de la vivienda (opcional)" type="number" value={p.valorCompra||""} onChange={e=>set("valorCompra",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Para calcular plusvalía</p></div>
+            <div><PctInput label="Plusvalía anual (%)" type="number" step="0.5" value={p.plusvalia||""} onChange={e=>set("plusvalia",e.target.value)} /><p style={{fontSize:10,color:C.t3,margin:"4px 0 0"}}>Promedio 5-8%</p></div>
           </div>
         </div>
         <div style={{display:"flex",justifyContent:"flex-end",marginTop:18}}><button onClick={()=>setStep(1)} disabled={!(p.monto>0&&p.tasa>0&&p.plazo>0)} style={{padding:"10px 24px",borderRadius:8,border:"none",cursor:p.monto>0&&p.tasa>0&&p.plazo>0?"pointer":"default",background:p.monto>0&&p.tasa>0&&p.plazo>0?C.accent:C.border,color:p.monto>0&&p.tasa>0&&p.plazo>0?"#000":C.t3,fontSize:14,fontWeight:700}}>Siguiente →</button></div>
@@ -1307,12 +1357,12 @@ function SimuladorInfonavit({ mob }) {
       {step===3&&tablaBase&&(<div style={{animation:"fadeIn 0.3s ease"}}>
         <button onClick={()=>setStep(2)} style={{padding:"8px 16px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:12,marginBottom:14}}>← Mi situación</button>
         <Card style={{marginBottom:16}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><span style={{fontSize:24}}>💪</span><div><h3 style={{fontSize:16,fontWeight:700,color:C.t1,margin:0}}>Abonos a capital</h3><p style={{fontSize:12,color:C.t3,margin:0}}>Sin penalización en Infonavit</p></div></div>
-          <div style={{marginBottom:14}}><Inp label="Abono extra fijo/mes" type="number" value={p.extra||""} onChange={e=>set("extra",e.target.value)} /></div>
+          <div style={{marginBottom:14}}><MoneyInput label="Abono extra fijo/mes" type="number" value={p.extra||""} onChange={e=>set("extra",e.target.value)} /></div>
           <h4 style={{fontSize:13,fontWeight:600,color:C.t2,margin:"0 0 8px"}}>🎯 Bonos extraordinarios</h4>
           {bonos.length>0&&(<div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:10}}>{bonos.map((b,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:C.accent+"08",borderRadius:8}}><span style={{fontSize:12,flex:1,color:C.t2}}>💰 <strong style={{color:C.accent}}>{fmt(b.monto)}</strong> mes {b.mes} · {b.desc}</span><button onClick={()=>delBono(i)} style={{background:"none",border:"none",cursor:"pointer",color:C.t3}}>✕</button></div>))}</div>)}
           <div style={{display:"grid",gridTemplateColumns:mob?"1fr 1fr":"80px 1fr 1fr auto",gap:8,alignItems:"end"}}>
             <Inp label="Mes" type="number" value={newBono.mes} onChange={e=>setNewBono(prev=>({...prev,mes:e.target.value}))} />
-            <Inp label="Monto" type="number" value={newBono.monto} onChange={e=>setNewBono(prev=>({...prev,monto:e.target.value}))} />
+            <MoneyInput label="Monto" value={newBono.monto} onChange={e=>setNewBono(prev=>({...prev,monto:e.target.value}))} />
             <Inp label="Concepto" value={newBono.desc} onChange={e=>setNewBono(prev=>({...prev,desc:e.target.value}))} />
             <button onClick={addBono} disabled={!newBono.mes||!newBono.monto} style={{padding:"10px 14px",borderRadius:8,background:newBono.mes&&newBono.monto?C.accent:C.border,border:"none",color:newBono.mes&&newBono.monto?"#000":C.t3,cursor:"pointer",fontSize:12,fontWeight:700}}>+ Agregar</button>
           </div>
