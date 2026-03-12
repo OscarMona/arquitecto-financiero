@@ -1469,7 +1469,7 @@ export default function Landing() {
           Descubre la verdad detrás de tus créditos.<br />
           <strong style={{ color: C.warning }}>¿Sabes cuánto estás pagando realmente?</strong>
         </p>
-        <p style={{ fontSize: 13, color: C.t3 }}>Herramientas gratuitas · Sin registro · 100% privado</p>
+        <p style={{ fontSize: 13, color: C.t3 }}>Herramientas gratuitas · Sin registro · Funciona en todo el mundo</p>
       </div>
 
       {/* TAB SELECTOR */}
@@ -1528,9 +1528,9 @@ export default function Landing() {
 
         {/* SEO Content */}
         <div style={{ padding: "32px 0 16px" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: C.t1, fontFamily: "'Sora', sans-serif", marginBottom: 12 }}>Simuladores Financieros Gratuitos para México</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: C.t1, fontFamily: "'Sora', sans-serif", marginBottom: 12 }}>Simuladores Financieros Gratuitos · Disponible en todo el mundo</h2>
           <p style={{ fontSize: 13, color: C.t3, lineHeight: 1.7, marginBottom: 16 }}>
-            Arquitecto Financiero te ofrece calculadoras gratuitas para que descubras cuánto pagarás realmente por tu crédito hipotecario, tu crédito automotriz, tu crédito Infonavit o tu tarjeta de crédito. Simula abonos a capital, bonos extraordinarios como tu aguinaldo o PTU, compara tasas de interés entre bancos y calcula si tu casa es negocio o pérdida con la plusvalía.
+            Arquitecto Financiero te ofrece calculadoras gratuitas para que descubras cuánto pagarás realmente por tu crédito hipotecario, automotriz o tarjeta de crédito. Funciona para cualquier país: México, Colombia, Argentina, Chile, Perú, España, Estados Unidos y más. Simula abonos a capital, bonos extraordinarios, compara tasas de interés entre bancos y calcula si tu propiedad es negocio o pérdida con la plusvalía.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
@@ -1551,7 +1551,7 @@ export default function Landing() {
             </div>
           </div>
           <p style={{ fontSize: 12, color: C.t3, lineHeight: 1.6 }}>
-            Todas las herramientas son 100% gratuitas, sin registro y sin compartir datos personales. Los cálculos se realizan en tu dispositivo con sistema de amortización francés, el estándar en México. Para decisiones financieras importantes, consulta a un asesor certificado.
+            Todas las herramientas son 100% gratuitas, sin registro y sin compartir datos personales. Los cálculos se realizan en tu dispositivo con sistema de amortización francés, el estándar internacional. Funciona para cualquier moneda y cualquier país. Para decisiones financieras importantes, consulta a un asesor certificado en tu país.
           </p>
         </div>
 

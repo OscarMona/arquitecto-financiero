@@ -4,13 +4,13 @@ import "./globals.css";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Arquitecto Financiero | Simulador de Crédito Hipotecario, Auto, Infonavit y Tarjeta",
-  description: "Calculadora gratuita de hipoteca, crédito automotriz, Infonavit, tarjeta de crédito e interés compuesto. Descubre cuánto pagarás realmente por tu casa, carro o deuda. Simula abonos a capital y ahorra miles de pesos.",
-  keywords: "simulador hipoteca, calculadora crédito, Infonavit, simulador tarjeta de crédito, pago mínimo, interés compuesto, calculadora ahorro, simulador crédito automotriz, abonos a capital, finanzas personales México, calculadora hipotecaria, simulador de deuda",
+  title: "Arquitecto Financiero | Simulador de Crédito Hipotecario, Auto, Tarjeta e Interés Compuesto",
+  description: "Simulador gratuito de hipoteca, crédito automotriz, tarjeta de crédito e interés compuesto. Descubre cuánto pagarás realmente por tu casa, carro o deuda. Funciona para México, Colombia, Argentina, Chile, España y todo el mundo. Simula abonos a capital y ahorra miles.",
+  keywords: "simulador hipoteca, calculadora crédito, simulador tarjeta de crédito, pago mínimo, interés compuesto, calculadora ahorro, simulador crédito automotriz, abonos a capital, finanzas personales, calculadora hipotecaria, simulador de deuda, mortgage calculator, credit card calculator, Infonavit, finanzas personales México, finanzas personales Colombia, finanzas personales Argentina, simulador crédito Chile, calculadora hipoteca España",
   authors: [{ name: "Arquitecto Financiero" }],
   openGraph: {
     title: "Arquitecto Financiero | ¿Cuánto pagarás realmente por tu crédito?",
-    description: "Simuladores gratuitos de hipoteca, auto, Infonavit, tarjeta de crédito e interés compuesto. Descubre la verdad detrás de tus deudas.",
+    description: "Simuladores gratuitos de hipoteca, auto, tarjeta de crédito e interés compuesto. Funciona en todo el mundo. Descubre la verdad detrás de tus deudas.",
     url: "https://arquitecto-financiero.vercel.app",
     siteName: "Arquitecto Financiero",
     locale: "es_MX",
@@ -61,19 +61,19 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebApplication",
               "name": "Arquitecto Financiero",
-              "description": "Simuladores gratuitos de crédito hipotecario, automotriz, Infonavit, tarjeta de crédito e interés compuesto para México",
+              "description": "Simuladores gratuitos de crédito hipotecario, automotriz, tarjeta de crédito e interés compuesto. Disponible para todo el mundo en español.",
               "url": "https://arquitecto-financiero.vercel.app",
               "applicationCategory": "FinanceApplication",
               "operatingSystem": "Web",
               "offers": {
                 "@type": "Offer",
                 "price": "0",
-                "priceCurrency": "MXN"
+                "priceCurrency": "USD"
               },
               "inLanguage": "es-MX",
               "audience": {
                 "@type": "Audience",
-                "audienceType": "Personas con créditos hipotecarios, automotrices, tarjetas de crédito o interés en ahorro e inversión"
+                "audienceType": "Personas de habla hispana en todo el mundo con créditos hipotecarios, automotrices, tarjetas de crédito o interés en ahorro e inversión"
               }
             }
           `}
