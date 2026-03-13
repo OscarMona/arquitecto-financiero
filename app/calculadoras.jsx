@@ -322,7 +322,7 @@ function SimuladorCredito({ mob }) {
               <p style={{ fontSize: 13, color: C.t3, margin: "0 0 4px" }}>{tipo === "hipoteca" ? "Tu casa" : "Tu carro"} de</p>
               <span style={{ fontSize: 32, fontWeight: 800, color: C.t1 }}>{fmt(p.monto)}</span>
               <p style={{ fontSize: 13, color: C.t3, margin: "4px 0 0" }}>te va a costar en realidad</p>
-              <div style={{ fontSize: 48, fontWeight: 900, color: C.danger, fontFamily: "'Space Grotesk', monospace", margin: "8px 0", lineHeight: 1 }}>{fmt(tablaBase.totalPagado)}</div>
+              <div style={{ fontSize: mob ? 32 : 48, fontWeight: 900, color: C.danger, fontFamily: "'Space Grotesk', monospace", margin: "8px 0", lineHeight: 1 }}>{fmt(tablaBase.totalPagado)}</div>
               <p style={{ fontSize: 14, color: C.warning, fontWeight: 600 }}>{tablaBase.costoPct}% más — por cada $1 pagas ${p.monto > 0 ? (tablaBase.totalPagado / p.monto).toFixed(2) : 0}</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 8 }}>
@@ -342,13 +342,13 @@ function SimuladorCredito({ mob }) {
             const cosPct = tablaBase.costosAdicionales > 0 ? ((tablaBase.costosAdicionales / p.pagoReal) * 100).toFixed(1) : 0;
             return (
               <Card style={{ marginBottom: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>💰 De tu pago de {fmt(p.pagoReal)}, ¿a dónde va cada peso?</h3>
+                <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>💰 De tu pago de {fmt(p.pagoReal)}, ¿a dónde va cada peso?</h3>
                 <div style={{ display: "flex", height: 32, borderRadius: 8, overflow: "hidden", marginBottom: 12 }}>
                   <div style={{ width: `${intPct}%`, background: C.danger, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff" }}>{intPct > 10 ? `${intPct}%` : ""}</div>
                   <div style={{ width: `${capPct}%`, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#000" }}>{capPct > 10 ? `${capPct}%` : ""}</div>
                   {cosPct > 0 && <div style={{ width: `${cosPct}%`, background: C.warning, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#000" }}>{cosPct > 10 ? `${cosPct}%` : ""}</div>}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: tablaBase.costosAdicionales > 0 ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : (tablaBase.costosAdicionales > 0 ? "1fr 1fr 1fr" : "1fr 1fr"), gap: 8 }}>
                   <div style={{ padding: 10, background: C.danger + "15", borderRadius: 8, borderLeft: `3px solid ${C.danger}` }}>
                     <div style={{ fontSize: 10, color: C.t3 }}>🔥 INTERESES</div><div style={{ fontSize: 18, fontWeight: 800, color: C.danger }}>{fmt(r.int)}</div><div style={{ fontSize: 11, color: C.t2 }}>{intPct}%</div>
                   </div>
@@ -367,7 +367,7 @@ function SimuladorCredito({ mob }) {
           {/* Annual summary */}
           <Card style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: 0 }}>📊 Resumen por año</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: 0 }}>📊 Resumen por año</h3>
               <button onClick={() => setShowAnual(!showAnual)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontSize: 12 }}>{showAnual ? "▲" : "▼"}</button>
             </div>
             {showAnual && (
@@ -398,7 +398,7 @@ function SimuladorCredito({ mob }) {
           {/* Chart */}
           {tablaBase.trend.length > 0 && (
             <Card style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📉 Distribución por año</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📉 Distribución por año</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={tablaBase.trend}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
@@ -571,7 +571,7 @@ function SimuladorCredito({ mob }) {
             const enganche = p.valorCompra - p.monto;
             return (
               <Card style={{ marginBottom: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>🏠 ¿Tu casa es negocio o pérdida?</h3>
+                <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>🏠 ¿Tu casa es negocio o pérdida?</h3>
                 <p style={{ fontSize: 11, color: C.t3, margin: "0 0 14px" }}>Costo del crédito vs plusvalía</p>
                 <div style={{ display: "grid", gridTemplateColumns: hasAbonos ? "1fr 1fr" : "1fr", gap: 12, marginBottom: 14 }}>
                   <div style={{ padding: 14, background: C.danger + "08", borderRadius: 12 }}>
@@ -615,7 +615,7 @@ function SimuladorCredito({ mob }) {
           {/* Amortization table with improvements */}
           {tablaMejora && hasAbonos && (
             <Card style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📋 Tabla con abonos extra aplicados</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📋 Tabla con abonos extra aplicados</h3>
               <div style={{ overflowX: "auto", maxHeight: 400 }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                   <thead style={{ position: "sticky", top: 0, background: C.card }}>
@@ -787,7 +787,7 @@ function LibertadFinanciera({ mob }) {
                 <div style={{ textAlign: "center", marginBottom: 16 }}>
                   <p style={{ fontSize: 13, color: C.t3, margin: "0 0 4px" }}>{edad > 0 ? `Si empiezas a los ${edad} años ahorrando ${fmt(ahorroMes)}/mes` : `Ahorrando ${fmt(ahorroMes)}/mes`}{hasBonos ? " + aportes extra" : ""}</p>
                   <p style={{ fontSize: 13, color: C.t3, margin: "0 0 8px" }}>{edad > 0 ? `a los ${edad + años} años vas a tener` : `en ${años} años vas a acumular`}</p>
-                  <div style={{ fontSize: 48, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", lineHeight: 1 }}>{fmt(resultado.final)}</div>
+                  <div style={{ fontSize: mob ? 32 : 48, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", lineHeight: 1 }}>{fmt(resultado.final)}</div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                   <ShockNumber icon="💰" label="Tú pusiste" value={fmt(resultado.totalAportado)} color={C.blue} />
@@ -799,7 +799,7 @@ function LibertadFinanciera({ mob }) {
               {/* Age scenarios */}
               {edad > 0 && (
                 <Card style={{ marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>🎂 ¿Cómo te verías en diferentes edades?</h3>
+                  <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>🎂 ¿Cómo te verías en diferentes edades?</h3>
                   <p style={{ fontSize: 11, color: C.t3, margin: "0 0 12px" }}>Con {fmt(ahorroMes)}/mes al {tasaAnual}%{hasBonos ? " + aportes extra" : ""}</p>
                   <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(3, 1fr)", gap: 8 }}>
                     {[50, 55, 60, 65].filter(e => e > edad).slice(0, 3).map(edadMeta => {
@@ -853,9 +853,9 @@ function LibertadFinanciera({ mob }) {
                 <div style={{ textAlign: "center", marginBottom: 16 }}>
                   <p style={{ fontSize: 13, color: C.t3, margin: "0 0 4px" }}>Para recibir <strong style={{ color: C.accent }}>{fmt(ingMeta)}/mes</strong> a partir de los {edadRetiro} años</p>
                   <p style={{ fontSize: 13, color: C.t3, margin: "0 0 8px" }}>necesitas acumular</p>
-                  <div style={{ fontSize: 42, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", lineHeight: 1, marginBottom: 8 }}>{fmt(retiro.capitalNecesario)}</div>
+                  <div style={{ fontSize: mob ? 30 : 42, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", lineHeight: 1, marginBottom: 8 }}>{fmt(retiro.capitalNecesario)}</div>
                   <p style={{ fontSize: 13, color: C.t3 }}>y para lograrlo necesitas ahorrar</p>
-                  <div style={{ fontSize: 48, fontWeight: 900, color: C.warning, fontFamily: "'Space Grotesk', monospace", lineHeight: 1, margin: "8px 0" }}>{fmt(retiro.ahMes)}/mes</div>
+                  <div style={{ fontSize: mob ? 36 : 48, fontWeight: 900, color: C.warning, fontFamily: "'Space Grotesk', monospace", lineHeight: 1, margin: "8px 0" }}>{fmt(retiro.ahMes)}/mes</div>
                   <p style={{ fontSize: 14, color: C.t2 }}>durante {retiro.añosHasta} años ({retiro.meses} meses)</p>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
@@ -870,7 +870,7 @@ function LibertadFinanciera({ mob }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 28 }}>💡</span>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>
+                    <div style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1 }}>
                       {fmt(retiro.ahMes)}/mes son {fmt(retiro.ahMes / 30)}/día
                     </div>
                     <p style={{ fontSize: 12, color: C.t2, margin: "4px 0 0" }}>
@@ -897,9 +897,9 @@ function LibertadFinanciera({ mob }) {
 
               {/* Different retirement income scenarios */}
               <Card style={{ marginBottom: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>📊 ¿Y si quiero otro ingreso mensual?</h3>
+                <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>📊 ¿Y si quiero otro ingreso mensual?</h3>
                 <p style={{ fontSize: 11, color: C.t3, margin: "0 0 12px" }}>Cuánto necesitarías ahorrar al mes para diferentes ingresos a los {edadRetiro} años</p>
-                <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "repeat(4, 1fr)", gap: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(4, 1fr)", gap: 8 }}>
                   {[20000, 30000, 50000, 100000].map(meta => {
                     const capNec = (meta * 12) / (tasaAnual / 100);
                     const tm = tasaAnual / 100 / 12;
@@ -933,7 +933,7 @@ function LibertadFinanciera({ mob }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <span style={{ fontSize: 18 }}>🎯</span>
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: 0 }}>Aportes extraordinarios</h3>
+            <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: 0 }}>Aportes extraordinarios</h3>
             <p style={{ fontSize: 11, color: C.t3, margin: 0 }}>Aguinaldo, PTU o cualquier extra que metas</p>
           </div>
         </div>
@@ -961,7 +961,7 @@ function LibertadFinanciera({ mob }) {
       {/* Chart */}
       {data && (modo === "futuro" ? data.dataAnual : data.dataAnual)?.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📈 Tu dinero creciendo</h3>
+          <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📈 Tu dinero creciendo</h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={modo === "futuro" ? data.dataAnual : data.dataAnual}>
               <defs>
@@ -984,7 +984,7 @@ function LibertadFinanciera({ mob }) {
       {data && data.dataMensual?.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: 0 }}>🐾 Bola de nieve mes a mes</h3>
+            <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: 0 }}>🐾 Bola de nieve mes a mes</h3>
             <button onClick={() => setShowTabla(!showTabla)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontSize: 12 }}>{showTabla ? "▲" : "▼"}</button>
           </div>
           {showTabla && (
@@ -1140,7 +1140,7 @@ function TarjetaCredito({ mob }) {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8 }}>
             <ShockNumber icon="💳" label="Tu deuda" value={fmt(deuda)} color={C.t1} />
             <ShockNumber icon="🔥" label="Intereses" value={fmt(escPrincipal.minimo.totalInt)} color={C.danger} sub={`${deuda > 0 ? ((escPrincipal.minimo.totalInt / deuda) * 100).toFixed(0) : 0}% de tu deuda`} />
             <ShockNumber icon="⏰" label="Tiempo" value={`${escPrincipal.minimo.meses} meses`} color={C.warning} sub={`${Math.floor(escPrincipal.minimo.meses / 12)} años`} />
@@ -1183,7 +1183,7 @@ function TarjetaCredito({ mob }) {
       {/* Rate scenarios - only when user doesn't know their rate */}
       {!tasaActiva && (
         <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>📊 ¿Y si mi tasa es diferente?</h3>
+          <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>📊 ¿Y si mi tasa es diferente?</h3>
           <p style={{ fontSize: 11, color: C.t3, margin: "0 0 12px" }}>Así se ve tu deuda de {fmt(deuda)} pagando el mínimo con diferentes tasas</p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
@@ -1219,7 +1219,7 @@ function TarjetaCredito({ mob }) {
       {/* Chart */}
       {escPrincipal?.minimo?.data?.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📉 Así baja tu deuda pagando el mínimo</h3>
+          <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📉 Así baja tu deuda pagando el mínimo</h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={escPrincipal.minimo.data}>
               <defs>
@@ -1363,7 +1363,7 @@ function SimuladorInfonavit({ mob }) {
               <div style={{width:`${capPct}%`,background:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#000"}}>{capPct>10?`${capPct}%`:""}</div>
               {cosPct>0&&<div style={{width:`${cosPct}%`,background:C.warning,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#000"}}>{cosPct>10?`${cosPct}%`:""}</div>}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:tablaBase.costosAd>0?"1fr 1fr 1fr":"1fr 1fr",gap:8}}>
+            <div style={{display:"grid",gridTemplateColumns:mob?"1fr":(tablaBase.costosAd>0?"1fr 1fr 1fr":"1fr 1fr"),gap:8}}>
               <div style={{padding:10,background:C.danger+"15",borderRadius:8,borderLeft:`3px solid ${C.danger}`}}><div style={{fontSize:10,color:C.t3}}>🔥 INTERESES</div><div style={{fontSize:18,fontWeight:800,color:C.danger}}>{fmt(r.int)}</div><div style={{fontSize:11,color:C.t2}}>{intPct}%</div></div>
               <div style={{padding:10,background:C.accent+"15",borderRadius:8,borderLeft:`3px solid ${C.accent}`}}><div style={{fontSize:10,color:C.t3}}>✅ CAPITAL</div><div style={{fontSize:18,fontWeight:800,color:C.accent}}>{fmt(r.amort)}</div><div style={{fontSize:11,color:C.t2}}>{capPct}%</div></div>
               {tablaBase.costosAd>0&&<div style={{padding:10,background:C.warning+"15",borderRadius:8,borderLeft:`3px solid ${C.warning}`}}><div style={{fontSize:10,color:C.t3}}>📋 COSTOS</div><div style={{fontSize:18,fontWeight:800,color:C.warning}}>{fmt(tablaBase.costosAd)}</div><div style={{fontSize:11,color:C.t2}}>{cosPct}%</div></div>}
@@ -1419,7 +1419,7 @@ function SimuladorInfonavit({ mob }) {
 
 export default function Landing() {
   const [tab, setTab] = useState("hipoteca");
-  const [mob, setMob] = useState(false);
+  const [mob, setMob] = useState(true);
 
   useEffect(() => {
     const ch = () => setMob(window.innerWidth < 768);
@@ -1534,19 +1534,19 @@ export default function Landing() {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏠 Simulador de Hipoteca y Auto</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏠 Simulador de Hipoteca y Auto</h3>
               <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Calcula el costo real de tu crédito hipotecario o automotriz. Ve cuánto pagas de intereses vs capital cada mes. Simula abonos extra y descubre cuántos años y pesos te puedes ahorrar.</p>
             </div>
             <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏗️ Simulador Crédito Infonavit</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🏗️ Simulador Crédito Infonavit</h3>
               <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Para créditos Infonavit en pesos del 2017 en adelante. Ingresa tu tasa fija, monto y plazo real de tu tabla de amortización. Compara cuánto ahorras vs un banco comercial.</p>
             </div>
             <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>💳 Simulador Tarjeta de Crédito</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>💳 Simulador Tarjeta de Crédito</h3>
               <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Descubre cuánto te va a costar pagar solo el mínimo de tu tarjeta. Compara con un pago fijo mensual y ve cuántos años y pesos te ahorras. Escenarios con tasas del 25% al 65%.</p>
             </div>
             <div style={{ padding: 14, background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🚀 Calculadora de Interés Compuesto</h3>
+              <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, margin: "0 0 6px" }}>🚀 Calculadora de Interés Compuesto</h3>
               <p style={{ fontSize: 12, color: C.t3, margin: 0, lineHeight: 1.6 }}>Calcula cuánto dinero puedes acumular ahorrando mensualmente. Planea tu retiro: descubre cuánto necesitas ahorrar para recibir el ingreso mensual que quieras a los 60 años.</p>
             </div>
           </div>
