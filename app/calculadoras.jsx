@@ -94,12 +94,12 @@ const PctInput = ({ label, value, onChange, step }) => {
   );
 };
 
-const ShockNumber = ({ label, value, color = C.danger, sub, icon }) => (
-  <div style={{ textAlign: "center", padding: "16px 8px" }}>
-    {icon && <div style={{ fontSize: 28, marginBottom: 4 }}>{icon}</div>}
-    <div style={{ fontSize: 11, color: C.t3, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 500 }}>{label}</div>
-    <div style={{ fontSize: 28, fontWeight: 800, color, fontFamily: "'Space Grotesk', monospace", lineHeight: 1 }}>{value}</div>
-    {sub && <div style={{ fontSize: 11, color: C.t2, marginTop: 4 }}>{sub}</div>}
+const ShockNumber = ({ label, value, color = C.danger, sub, icon, compact }) => (
+  <div style={{ textAlign: "center", padding: compact ? "10px 4px" : "16px 8px" }}>
+    {icon && <div style={{ fontSize: compact ? 20 : 28, marginBottom: 4 }}>{icon}</div>}
+    <div style={{ fontSize: compact ? 9 : 11, color: C.t3, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 500 }}>{label}</div>
+    <div style={{ fontSize: compact ? 18 : 28, fontWeight: 800, color, fontFamily: "'Space Grotesk', monospace", lineHeight: 1 }}>{value}</div>
+    {sub && <div style={{ fontSize: compact ? 9 : 11, color: C.t2, marginTop: 4 }}>{sub}</div>}
   </div>
 );
 
@@ -326,10 +326,10 @@ function SimuladorCredito({ mob }) {
               <p style={{ fontSize: 14, color: C.warning, fontWeight: 600 }}>{tablaBase.costoPct}% más — por cada $1 pagas ${p.monto > 0 ? (tablaBase.totalPagado / p.monto).toFixed(2) : 0}</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 8 }}>
-              <ShockNumber icon="💸" label="Intereses" value={fmt(tablaBase.totalInt)} color={C.danger} sub="regalados al banco" />
-              {tablaBase.totalCostos > 0 && <ShockNumber icon="📋" label="Costos extra" value={fmt(tablaBase.totalCostos)} color={C.warning} sub="seguros, comisiones" />}
-              <ShockNumber icon="📍" label="Saldo actual" value={fmt(tablaBase.saldoActual)} color={C.cyan} sub={`mes ${p.mesActual} de ${p.plazo}`} />
-              <ShockNumber icon="⏰" label="Te faltan" value={`${tablaBase.mesesRestantes} meses`} color={C.t1} sub={`${Math.round(tablaBase.mesesRestantes / 12)} años`} />
+              <ShockNumber compact={mob} icon="💸" label="Intereses" value={fmt(tablaBase.totalInt)} color={C.danger} sub="regalados al banco" />
+              {tablaBase.totalCostos > 0 && <ShockNumber compact={mob} icon="📋" label="Costos extra" value={fmt(tablaBase.totalCostos)} color={C.warning} sub="seguros, comisiones" />}
+              <ShockNumber compact={mob} icon="📍" label="Saldo actual" value={fmt(tablaBase.saldoActual)} color={C.cyan} sub={`mes ${p.mesActual} de ${p.plazo}`} />
+              <ShockNumber compact={mob} icon="⏰" label="Te faltan" value={`${tablaBase.mesesRestantes} meses`} color={C.t1} sub={`${Math.round(tablaBase.mesesRestantes / 12)} años`} />
             </div>
           </Card>
 
@@ -789,10 +789,10 @@ function LibertadFinanciera({ mob }) {
                   <p style={{ fontSize: 13, color: C.t3, margin: "0 0 8px" }}>{edad > 0 ? `a los ${edad + años} años vas a tener` : `en ${años} años vas a acumular`}</p>
                   <div style={{ fontSize: mob ? 32 : 48, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", lineHeight: 1 }}>{fmt(resultado.final)}</div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                  <ShockNumber icon="💰" label="Tú pusiste" value={fmt(resultado.totalAportado)} color={C.blue} />
-                  <ShockNumber icon="✨" label="Interés te regaló" value={fmt(resultado.interesesGanados)} color={C.accent} sub={`${resultado.totalAportado > 0 ? ((resultado.interesesGanados / resultado.totalAportado) * 100).toFixed(0) : 0}% extra`} />
-                  <ShockNumber icon="📅" label="Meses" value={años * 12} color={C.t1} sub={`${años} años`} />
+                <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8 }}>
+                  <ShockNumber compact={mob} icon="💰" label="Tú pusiste" value={fmt(resultado.totalAportado)} color={C.blue} />
+                  <ShockNumber compact={mob} icon="✨" label="Interés te regaló" value={fmt(resultado.interesesGanados)} color={C.accent} sub={`${resultado.totalAportado > 0 ? ((resultado.interesesGanados / resultado.totalAportado) * 100).toFixed(0) : 0}% extra`} />
+                  <ShockNumber compact={mob} icon="📅" label="Meses" value={años * 12} color={C.t1} sub={`${años} años`} />
                 </div>
               </Card>
 
@@ -858,10 +858,10 @@ function LibertadFinanciera({ mob }) {
                   <div style={{ fontSize: mob ? 36 : 48, fontWeight: 900, color: C.warning, fontFamily: "'Space Grotesk', monospace", lineHeight: 1, margin: "8px 0" }}>{fmt(retiro.ahMes)}/mes</div>
                   <p style={{ fontSize: 14, color: C.t2 }}>durante {retiro.añosHasta} años ({retiro.meses} meses)</p>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                  <ShockNumber icon="🎯" label="Capital necesario" value={fmt(retiro.capitalNecesario)} color={C.accent} sub={`genera ${fmt(ingMeta)}/mes`} />
-                  <ShockNumber icon="💰" label="Tú pondrías" value={fmt(retiro.totalPuesto)} color={C.blue} sub={`en ${retiro.añosHasta} años`} />
-                  <ShockNumber icon="✨" label="Interés pone" value={fmt(retiro.intereses)} color={C.accent} sub="trabaja por ti" />
+                <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8 }}>
+                  <ShockNumber compact={mob} icon="🎯" label="Capital necesario" value={fmt(retiro.capitalNecesario)} color={C.accent} sub={`genera ${fmt(ingMeta)}/mes`} />
+                  <ShockNumber compact={mob} icon="💰" label="Tú pondrías" value={fmt(retiro.totalPuesto)} color={C.blue} sub={`en ${retiro.añosHasta} años`} />
+                  <ShockNumber compact={mob} icon="✨" label="Interés pone" value={fmt(retiro.intereses)} color={C.accent} sub="trabaja por ti" />
                 </div>
               </Card>
 
@@ -1141,9 +1141,9 @@ function TarjetaCredito({ mob }) {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8 }}>
-            <ShockNumber icon="💳" label="Tu deuda" value={fmt(deuda)} color={C.t1} />
-            <ShockNumber icon="🔥" label="Intereses" value={fmt(escPrincipal.minimo.totalInt)} color={C.danger} sub={`${deuda > 0 ? ((escPrincipal.minimo.totalInt / deuda) * 100).toFixed(0) : 0}% de tu deuda`} />
-            <ShockNumber icon="⏰" label="Tiempo" value={`${escPrincipal.minimo.meses} meses`} color={C.warning} sub={`${Math.floor(escPrincipal.minimo.meses / 12)} años`} />
+            <ShockNumber compact={mob} icon="💳" label="Tu deuda" value={fmt(deuda)} color={C.t1} />
+            <ShockNumber compact={mob} icon="🔥" label="Intereses" value={fmt(escPrincipal.minimo.totalInt)} color={C.danger} sub={`${deuda > 0 ? ((escPrincipal.minimo.totalInt / deuda) * 100).toFixed(0) : 0}% de tu deuda`} />
+            <ShockNumber compact={mob} icon="⏰" label="Tiempo" value={`${escPrincipal.minimo.meses} meses`} color={C.warning} sub={`${Math.floor(escPrincipal.minimo.meses / 12)} años`} />
           </div>
         </Card>
       )}
@@ -1344,10 +1344,10 @@ function SimuladorInfonavit({ mob }) {
             <p style={{fontSize:14,color:C.warning,fontWeight:600}}>{tablaBase.costoPct}% más — por cada $1 pagas ${p.monto>0?(tablaBase.totalPagado/p.monto).toFixed(2):0}</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:mob?"1fr 1fr":"1fr 1fr 1fr 1fr",gap:8}}>
-            <ShockNumber icon="💸" label="Intereses" value={fmt(tablaBase.totalInt)} color={C.danger} sub="al Infonavit" />
-            {tablaBase.totalCostos>0&&<ShockNumber icon="📋" label="Costos extra" value={fmt(tablaBase.totalCostos)} color={C.warning} sub="seguros, admin" />}
-            <ShockNumber icon="📍" label="Saldo actual" value={fmt(tablaBase.saldoActual)} color={C.cyan} sub={`mes ${p.mesActual}`} />
-            <ShockNumber icon="⏰" label="Te faltan" value={`${tablaBase.mesesRest}m`} color={C.t1} sub={`${Math.round(tablaBase.mesesRest/12)} años`} />
+            <ShockNumber compact={mob} icon="💸" label="Intereses" value={fmt(tablaBase.totalInt)} color={C.danger} sub="al Infonavit" />
+            {tablaBase.totalCostos>0&&<ShockNumber compact={mob} icon="📋" label="Costos extra" value={fmt(tablaBase.totalCostos)} color={C.warning} sub="seguros, admin" />}
+            <ShockNumber compact={mob} icon="📍" label="Saldo actual" value={fmt(tablaBase.saldoActual)} color={C.cyan} sub={`mes ${p.mesActual}`} />
+            <ShockNumber compact={mob} icon="⏰" label="Te faltan" value={`${tablaBase.mesesRest}m`} color={C.t1} sub={`${Math.round(tablaBase.mesesRest/12)} años`} />
           </div>
         </Card>
 
