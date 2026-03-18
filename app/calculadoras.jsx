@@ -166,7 +166,7 @@ function SimuladorCredito({ mob }) {
       const añoTotal = añoInt + añoCap + añoCostos;
       resumenAnual.push({ año: a + 1, intereses: añoInt, capital: añoCap, costos: añoCostos, total: añoTotal,
         pctInt: añoTotal > 0 ? ((añoInt / añoTotal) * 100).toFixed(1) : 0, pctCap: añoTotal > 0 ? ((añoCap / añoTotal) * 100).toFixed(1) : 0,
-        saldoFinal: slice.length > 0 ? Math.max(slice[slice.length - 1].saldo - slice[slice.length - 1].amort - slice[slice.length - 1].ab, 0) : 0,
+        saldoFinal: slice.length > 0 ? Math.max(slice[slice.length - 1].saldo - slice[slice.length - 1].amort - (slice[slice.length - 1].ab || 0), 0) : 0,
         isPast: (a + 1) * 12 <= mesActual,
       });
     }
@@ -1041,24 +1041,31 @@ function TarjetaCredito({ mob }) {
 
   const pctMin = deuda > 0 ? ((pagoMin / deuda) * 100).toFixed(1) : 0;
 
-  // Simulate paying minimum
+  // Simulate paying minimum (interest + 1.5% capital + CAT costs)
   const simular = (tasaAnual, deudaInicial, pagoMinimo, pagoExtra) => {
     if (deudaInicial <= 0 || tasaAnual <= 0 || pagoMinimo <= 0) return null;
     const tm = tasaAnual / 100 / 12;
+    const pctCapital = 0.015; // 1.5% abono a capital
     let saldo = deudaInicial; let totalPag = 0; let totalInt = 0; let mes = 0;
-    const data = [];
+    const tabla = []; // Amortization table
     while (saldo > 1 && mes < 600) {
       mes++;
       const int = saldo * tm;
-      const minCalc = Math.max(saldo * (pagoMinimo / deudaInicial), 200);
-      const pago = pagoExtra > 0 ? Math.min(pagoExtra, saldo + int) : Math.min(minCalc, saldo + int);
-      if (pago <= int && saldo > 1 && pagoExtra > 0) return { error: true, minRequerido: int };
-      const cap = pago - int;
+      const capital = saldo * pctCapital;
+      let pago;
+      if (pagoExtra > 0) {
+        pago = Math.min(pagoExtra, saldo + int);
+      } else {
+        pago = Math.max(int + capital, 200);
+        pago = Math.min(pago, saldo + int);
+      }
+      if (pago <= int && saldo > 1 && pagoExtra > 0) return { error: true, minRequerido: Math.ceil(int + 1) };
+      const capReal = Math.max(pago - int, 0);
       totalPag += pago; totalInt += int;
-      saldo = Math.max(saldo - cap, 0);
-      if (mes % 3 === 0 || saldo <= 1) data.push({ mes: `Mes ${mes}`, saldo: Math.round(saldo), pagado: Math.round(totalPag) });
+      saldo = Math.max(saldo - capReal, 0);
+      tabla.push({ mes, pago: Math.round(pago), interes: Math.round(int), capital: Math.round(capReal), saldo: Math.round(saldo) });
     }
-    return { meses: mes, totalPagado: totalPag, totalInt, data };
+    return { meses: mes, totalPagado: totalPag, totalInt, tabla };
   };
 
   const tasasComunes = [25, 30, 36, 45, 55, 65];
@@ -1119,6 +1126,48 @@ function TarjetaCredito({ mob }) {
             )}
           </div>
 
+          {/* 3-way breakdown: Interest + Capital (1.5%) + CAT cost */}
+          {deuda > 0 && pagoMin > 0 && (tasaActiva || !conoceTasa) && (() => {
+            const tasaUsar = tasaActiva || 36;
+            const intMensual = Math.round(deuda * (tasaUsar / 100 / 12));
+            const abonoCapital = Math.round(deuda * 0.015);
+            const costoCAT = Math.max(pagoMin - intMensual - abonoCapital, 0);
+            return (
+              <div style={{ padding: 14, background: `linear-gradient(135deg, ${C.danger}08, ${C.accent}05)`, borderRadius: 12, border: `1px solid ${C.border}` }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.warning, marginBottom: 10 }}>
+                  ⚡ Desglose de tu pago mínimo de {fmt(pagoMin)}{!tasaActiva ? ` (estimando ${tasaUsar}%)` : ""}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
+                  <div style={{ textAlign: "center", padding: 10, background: C.danger + "12", borderRadius: 10 }}>
+                    <div style={{ fontSize: 8, color: C.danger, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>🔥 Intereses</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: C.danger, fontFamily: "'Space Grotesk', monospace", marginTop: 4 }}>{fmt(intMensual)}</div>
+                    <div style={{ fontSize: 9, color: C.t3, marginTop: 2 }}>Ganancia del banco</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: 10, background: C.accent + "12", borderRadius: 10 }}>
+                    <div style={{ fontSize: 8, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>✅ Capital (1.5%)</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: C.accent, fontFamily: "'Space Grotesk', monospace", marginTop: 4 }}>{fmt(abonoCapital)}</div>
+                    <div style={{ fontSize: 9, color: C.t3, marginTop: 2 }}>Lo que SÍ reduces</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: 10, background: C.warning + "12", borderRadius: 10 }}>
+                    <div style={{ fontSize: 8, color: C.warning, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>📋 Costo CAT</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: C.warning, fontFamily: "'Space Grotesk', monospace", marginTop: 4 }}>{fmt(costoCAT)}</div>
+                    <div style={{ fontSize: 9, color: C.t3, marginTop: 2 }}>Comisiones y seguros</div>
+                  </div>
+                </div>
+                <div style={{ padding: 8, background: C.bg, borderRadius: 8, textAlign: "center" }}>
+                  <span style={{ fontSize: 11, color: C.t3 }}>De {fmt(pagoMin)}, solo </span>
+                  <span style={{ fontSize: 11, color: C.accent, fontWeight: 700 }}>{fmt(abonoCapital)} </span>
+                  <span style={{ fontSize: 11, color: C.t3 }}>reducen tu deuda ({pagoMin > 0 ? ((abonoCapital / pagoMin) * 100).toFixed(0) : 0}%)</span>
+                </div>
+                {intMensual >= pagoMin && (
+                  <p style={{ fontSize: 11, color: C.danger, margin: "8px 0 0", fontWeight: 600, textAlign: "center" }}>
+                    ⚠️ ¡Tu pago mínimo ni siquiera cubre los intereses! Tu deuda está CRECIENDO.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
           <div>
             <MoneyInput label="¿Cuánto podrías pagar fijo al mes? (opcional)" type="number" value={pagoFijo || ""} onChange={e => setPagoFijo(parseFloat(e.target.value) || 0)} />
             <p style={{ fontSize: 10, color: C.t3, margin: "4px 0 0" }}>Si en vez del mínimo pagaras una cantidad fija, ¿cuánto sería?</p>
@@ -1142,9 +1191,13 @@ function TarjetaCredito({ mob }) {
 
           <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8 }}>
             <ShockNumber compact={mob} icon="💳" label="Tu deuda" value={fmt(deuda)} color={C.t1} />
-            <ShockNumber compact={mob} icon="🔥" label="Intereses" value={fmt(escPrincipal.minimo.totalInt)} color={C.danger} sub={`${deuda > 0 ? ((escPrincipal.minimo.totalInt / deuda) * 100).toFixed(0) : 0}% de tu deuda`} />
-            <ShockNumber compact={mob} icon="⏰" label="Tiempo" value={`${escPrincipal.minimo.meses} meses`} color={C.warning} sub={`${Math.floor(escPrincipal.minimo.meses / 12)} años`} />
+            <ShockNumber compact={mob} icon="🔥" label="Total intereses" value={fmt(escPrincipal.minimo.totalInt)} color={C.danger} sub={`${deuda > 0 ? ((escPrincipal.minimo.totalInt / deuda) * 100).toFixed(0) : 0}% extra`} />
+            <ShockNumber compact={mob} icon="⏰" label="Tiempo" value={`${Math.floor(escPrincipal.minimo.meses / 12)}a ${escPrincipal.minimo.meses % 12}m`} color={C.warning} sub={`${escPrincipal.minimo.meses} meses`} />
           </div>
+
+          <p style={{ fontSize: 10, color: C.warning, margin: "10px 0 0", fontWeight: 600, textAlign: "center" }}>
+            💡 El pago mínimo baja cada mes conforme baja tu saldo. Por eso el total no es {fmt(pagoMin)} × {escPrincipal.minimo.meses} meses. Abajo la tabla te muestra cómo va bajando.
+          </p>
         </Card>
       )}
 
@@ -1216,24 +1269,73 @@ function TarjetaCredito({ mob }) {
         </Card>
       )}
 
-      {/* Chart */}
-      {escPrincipal?.minimo?.data?.length > 0 && (
+      {/* Amortization table */}
+      {escPrincipal?.minimo?.tabla?.length > 0 && (
+        <Card style={{ marginBottom: 16 }}>
+          <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>📋 Tabla de amortización — Pago mínimo</h3>
+          <p style={{ fontSize: 10, color: C.t3, margin: "0 0 10px" }}>Observa cómo el pago baja cada mes. El banco lo reduce para que tardes más.</p>
+          <div style={{ maxHeight: 350, overflowY: "auto", borderRadius: 8, border: `1px solid ${C.border}` }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+              <thead><tr style={{ background: C.bg, position: "sticky", top: 0, zIndex: 1 }}>
+                {["Mes", "Pago", "Interés", "A capital", "Saldo"].map((h, i) => (
+                  <th key={i} style={{ padding: "8px 4px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 8, textTransform: "uppercase", letterSpacing: 0.5, borderBottom: `2px solid ${C.border}` }}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {escPrincipal.minimo.tabla.filter((r, i) => {
+                  if (i < 6) return true;
+                  if (i < 24 && i % 3 === 0) return true;
+                  if (i < 60 && i % 6 === 0) return true;
+                  if (i % 12 === 0) return true;
+                  if (r.saldo <= 1) return true;
+                  return false;
+                }).map((r, i) => (
+                  <tr key={i} style={{ borderBottom: `1px solid ${C.border}22`, background: r.mes <= 3 ? C.danger + "06" : "transparent" }}>
+                    <td style={{ padding: "6px 4px", textAlign: "right", color: C.t2, fontWeight: 600 }}>{r.mes}</td>
+                    <td style={{ padding: "6px 4px", textAlign: "right", color: C.t1, fontWeight: 600 }}>{fmt(r.pago)}</td>
+                    <td style={{ padding: "6px 4px", textAlign: "right", color: C.danger }}>{fmt(r.interes)}</td>
+                    <td style={{ padding: "6px 4px", textAlign: "right", color: C.accent }}>{fmt(r.capital)}</td>
+                    <td style={{ padding: "6px 4px", textAlign: "right", color: r.saldo > deuda * 0.5 ? C.danger : r.saldo > deuda * 0.2 ? C.warning : C.accent, fontWeight: 600 }}>{fmt(r.saldo)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 10 }}>
+            <div style={{ textAlign: "center", padding: 8, background: C.bg, borderRadius: 8 }}>
+              <div style={{ fontSize: 8, color: C.t3, textTransform: "uppercase" }}>Mes 1 pagas</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.danger }}>{fmt(escPrincipal.minimo.tabla[0]?.pago)}</div>
+            </div>
+            <div style={{ textAlign: "center", padding: 8, background: C.bg, borderRadius: 8 }}>
+              <div style={{ fontSize: 8, color: C.t3, textTransform: "uppercase" }}>A la mitad pagas</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.warning }}>{fmt(escPrincipal.minimo.tabla[Math.floor(escPrincipal.minimo.tabla.length / 2)]?.pago)}</div>
+            </div>
+            <div style={{ textAlign: "center", padding: 8, background: C.bg, borderRadius: 8 }}>
+              <div style={{ fontSize: 8, color: C.t3, textTransform: "uppercase" }}>Último mes pagas</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.accent }}>{fmt(escPrincipal.minimo.tabla[escPrincipal.minimo.tabla.length - 1]?.pago)}</div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Debt decrease chart */}
+      {escPrincipal?.minimo?.tabla?.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
           <h3 style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: C.t1, marginBottom: 12 }}>📉 Así baja tu deuda pagando el mínimo</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={escPrincipal.minimo.data}>
+            <AreaChart data={escPrincipal.minimo.tabla.filter((r, i) => i % Math.max(Math.floor(escPrincipal.minimo.tabla.length / 30), 1) === 0 || r.saldo <= 1)}>
               <defs>
                 <linearGradient id="gDeuda" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={C.danger} stopOpacity={0.3} /><stop offset="95%" stopColor={C.danger} stopOpacity={0} /></linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-              <XAxis dataKey="mes" stroke={C.t3} fontSize={10} />
+              <XAxis dataKey="mes" stroke={C.t3} fontSize={10} label={{ value: "Meses", position: "bottom", fontSize: 9, fill: C.t3 }} />
               <YAxis stroke={C.t3} fontSize={10} tickFormatter={v => fmt(v)} />
               <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, color: C.t1, fontSize: 12 }} formatter={v => fmt(v)} />
               <Area type="monotone" dataKey="saldo" stroke={C.danger} fill="url(#gDeuda)" strokeWidth={2} name="Saldo pendiente" />
               <Legend wrapperStyle={{ fontSize: 10 }} />
             </AreaChart>
           </ResponsiveContainer>
-          <p style={{ fontSize: 11, color: C.t3, marginTop: 8, textAlign: "center" }}>Observa cómo la deuda baja extremadamente lento al principio. Eso es porque casi todo tu pago se va a intereses.</p>
+          <p style={{ fontSize: 11, color: C.t3, marginTop: 8, textAlign: "center" }}>La deuda baja lento al principio porque casi todo se va a intereses. Después de años empieza a bajar más rápido.</p>
         </Card>
       )}
 
@@ -1280,7 +1382,7 @@ function SimuladorInfonavit({ mob }) {
     let saldoActual=monto;for(let i=1;i<mesActual&&i<=rows.length;i++)saldoActual-=rows[i-1].amort;
     const mesesRest=rows.filter(r=>!r.isPast).length;
     const resAnual=[];const maxA=Math.ceil(rows.length/12);
-    for(let a=0;a<maxA;a++){const sl=rows.slice(a*12,Math.min((a+1)*12,rows.length));const aI=sl.reduce((s,r)=>s+r.int,0);const aC=sl.reduce((s,r)=>s+r.amort+r.ab,0);const aCo=sl.reduce((s,r)=>s+r.costos,0);const aT=aI+aC+aCo;resAnual.push({año:a+1,intereses:aI,capital:aC,costos:aCo,total:aT,pctInt:aT>0?((aI/aT)*100).toFixed(1):0,pctCap:aT>0?((aC/aT)*100).toFixed(1):0,saldoFinal:sl.length>0?Math.max(sl[sl.length-1].saldo-sl[sl.length-1].amort-sl[sl.length-1].ab,0):0,isPast:(a+1)*12<=mesActual});}
+    for(let a=0;a<maxA;a++){const sl=rows.slice(a*12,Math.min((a+1)*12,rows.length));const aI=sl.reduce((s,r)=>s+r.int,0);const aC=sl.reduce((s,r)=>s+r.amort+r.ab,0);const aCo=sl.reduce((s,r)=>s+r.costos,0);const aT=aI+aC+aCo;resAnual.push({año:a+1,intereses:aI,capital:aC,costos:aCo,total:aT,pctInt:aT>0?((aI/aT)*100).toFixed(1):0,pctCap:aT>0?((aC/aT)*100).toFixed(1):0,saldoFinal:sl.length>0?Math.max(sl[sl.length-1].saldo-sl[sl.length-1].amort-(sl[sl.length-1].ab||0),0):0,isPast:(a+1)*12<=mesActual});}
     return{rows,pago,totalInt,totalIntOrig:tiOrig,ahorro:tiOrig-totalInt,mesesAh:plazo-rows.length,totalPagado,totalPagadoOrig,costoPct,saldoActual,costosAd,mensReal,resAnual,mesesRest,totalCostos};
   };
 
@@ -1515,10 +1617,10 @@ export default function Landing() {
               </svg>
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 800, color: C.t1, fontFamily: "'Sora', sans-serif", margin: "0 0 8px" }}>
-              ¿Quieres tomar el control de tus finanzas?
+              ¿Quieres tomar el control total de tus finanzas?
             </h3>
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Próximamente: Arquitecto Financiero Pro — tu presupuesto personal, seguimiento de gastos, proyecciones y más. <strong style={{ color: C.accent }}>Primer mes gratis.</strong>
+              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $99 MXN/mes.
             </p>
             <div style={{ display: "inline-block", padding: "10px 24px", borderRadius: 8, background: C.accent + "15", border: `1px solid ${C.accent}33`, color: C.accent, fontSize: 13, fontWeight: 600 }}>
               🔔 Próximamente
