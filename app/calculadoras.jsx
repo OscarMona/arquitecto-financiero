@@ -1620,7 +1620,7 @@ export default function Landing() {
               ¿Quieres tomar el control total de tus finanzas?
             </h3>
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $99 MXN/mes.
+              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $4.99 USD/mes.
             </p>
             <div style={{ display: "inline-block", padding: "10px 24px", borderRadius: 8, background: C.accent + "15", border: `1px solid ${C.accent}33`, color: C.accent, fontSize: 13, fontWeight: 600 }}>
               🔔 Próximamente
