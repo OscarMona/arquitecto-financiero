@@ -1,6 +1,8 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from "recharts";
+import { useAuth } from "../lib/auth-context";
+import { saveUserData, loadUserData } from "../lib/db";
 
 const C = { bg: "#050A14", card: "#0E1525", border: "#1A2540", accent: "#00E8B8", accentDim: "#00E8B815", accentGlow: "rgba(0,232,184,0.08)", danger: "#FF4D6A", dangerDim: "#FF4D6A15", warning: "#FFB443", purple: "#A78BFA", blue: "#5B9CF6", cyan: "#22D3EE", pink: "#F472B6", t1: "#F1F5F9", t2: "#8B9DC3", t3: "#475569" };
 const CATEGORIAS = [{ key:"Ingresos",label:"Ingresos",icon:"💰",color:C.accent },{ key:"Gastos_Fijos",label:"Gastos Fijos",icon:"🏠",color:C.danger },{ key:"Gastos_Variables",label:"Gastos Variables",icon:"🛒",color:C.warning },{ key:"Ahorro",label:"Ahorro e Inversión",icon:"🐷",color:C.cyan },{ key:"Deuda",label:"Deuda",icon:"💳",color:C.purple },{ key:"Salud",label:"Salud",icon:"🏥",color:C.pink },{ key:"Educacion",label:"Educación",icon:"📚",color:C.blue },{ key:"Entretenimiento",label:"Entretenimiento",icon:"🎬",color:C.warning },{ key:"Hogar",label:"Hogar",icon:"🔧",color:C.t2 },{ key:"Otros",label:"Otros",icon:"📦",color:C.t3 }];
@@ -45,9 +47,39 @@ export default function AppPro(){
   const [fbDraft,setFbDraft]=useState({});
   const [addingTo,setAddingTo]=useState(null);
   const [extraName,setExtraName]=useState("");
+  const [loaded,setLoaded]=useState(false);
+
+  const { user } = useAuth();
 
   useEffect(()=>{const ch=()=>setMob(window.innerWidth<768);ch();window.addEventListener("resize",ch);return()=>window.removeEventListener("resize",ch);},[]);
   const showToast=m=>{setToast(m);setTimeout(()=>setToast(""),2500);};
+
+  // Load data from Firebase on mount
+  useEffect(()=>{
+    if(!user)return;
+    const load=async()=>{
+      const data=await loadUserData(user.uid);
+      if(data){
+        if(data.nombre)setNombre(data.nombre);
+        if(data.gastos)setGastos(data.gastos);
+        if(data.pres)setPres(data.pres);
+        if(data.programados)setProgramados(data.programados);
+        if(data.metas)setMetas(data.metas);
+        if(data.onboarded)setOnboarded(data.onboarded);
+      }
+      setLoaded(true);
+    };
+    load();
+  },[user]);
+
+  // Auto-save to Firebase when data changes
+  useEffect(()=>{
+    if(!user||!loaded)return;
+    const timer=setTimeout(()=>{
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded});
+    },1000);
+    return()=>clearTimeout(timer);
+  },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
   const curPK=pk(mes,año);
   const hasBudget=Object.keys(pres).length>0;
 
