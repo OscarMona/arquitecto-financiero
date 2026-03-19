@@ -1519,7 +1519,7 @@ function SimuladorInfonavit({ mob }) {
 }
 
 
-export default function Landing() {
+export default function Landing({ onGoPro }) {
   const [tab, setTab] = useState("hipoteca");
   const [mob, setMob] = useState(true);
 
@@ -1622,9 +1622,9 @@ export default function Landing() {
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
               Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $4.99 USD/mes.
             </p>
-            <div style={{ display: "inline-block", padding: "10px 24px", borderRadius: 8, background: C.accent + "15", border: `1px solid ${C.accent}33`, color: C.accent, fontSize: 13, fontWeight: 600 }}>
-              🔔 Próximamente
-            </div>
+            <button onClick={onGoPro} style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+              🚀 Comenzar ahora
+            </button>
           </div>
         </div>
 

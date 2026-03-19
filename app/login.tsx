@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
 
-export default function LoginScreen() {
+export default function LoginScreen({ onBack }: { onBack?: () => void }) {
   const { loginEmail, registerEmail, loginGoogle } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -45,9 +45,9 @@ export default function LoginScreen() {
   };
 
   const C = {
-    bg: "#0B1120", card: "#111B2E", border: "#1E2D4A",
-    accent: "#00D4AA", danger: "#FF5A5A",
-    t1: "#F1F5F9", t2: "#94A3B8", t3: "#475569",
+    bg: "#050A14", card: "#0E1525", border: "#1A2540",
+    accent: "#00E8B8", danger: "#FF4D6A",
+    t1: "#F1F5F9", t2: "#8B9DC3", t3: "#475569",
   };
 
   return (
@@ -55,29 +55,38 @@ export default function LoginScreen() {
       minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center",
       justifyContent: "center", padding: 20, fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
       <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
-        {/* Logo */}
-        <svg viewBox="0 0 120 120" style={{ width: 80, height: 80, margin: "0 auto 16px" }}>
-          <circle cx="60" cy="60" r="56" fill={C.accent + "08"} stroke={C.accent + "20"} strokeWidth="1" />
-          <rect x="25" y="50" width="8" height="35" rx="2" fill={C.accent} opacity="0.7" />
-          <rect x="38" y="42" width="8" height="43" rx="2" fill={C.accent} opacity="0.8" />
-          <rect x="51" y="35" width="8" height="50" rx="2" fill={C.accent} />
-          <rect x="64" y="42" width="8" height="43" rx="2" fill={C.accent} opacity="0.8" />
-          <rect x="77" y="50" width="8" height="35" rx="2" fill={C.accent} opacity="0.7" />
-          <path d="M30 48 L56 28 L60 25 L64 28 L90 48" fill="none" stroke={C.accent} strokeWidth="3" strokeLinecap="round" />
-          <text x="60" y="105" textAnchor="middle" fill={C.accent} fontSize="11" fontWeight="800" fontFamily="'Sora', sans-serif">ARQUITECTO</text>
-        </svg>
-        <p style={{ color: C.t2, fontSize: 14, marginBottom: 32 }}>Toma el control de tu dinero</p>
+        {onBack && (
+          <button onClick={onBack} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontSize: 13, marginBottom: 16 }}>
+            ← Volver a calculadoras
+          </button>
+        )}
 
-        <div style={{
-          background: C.card, borderRadius: 16, padding: 28,
-          border: `1px solid ${C.border}`,
-        }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          <svg width="70" height="70" viewBox="0 0 120 120" fill="none">
+            <circle cx="60" cy="60" r="57" stroke={C.accent} strokeWidth="2.5" fill="none" opacity="0.2" />
+            <rect x="30" y="72" width="60" height="6" rx="1.5" fill={C.accent} opacity="0.85" />
+            <rect x="38" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7" />
+            <rect x="57.5" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7" />
+            <rect x="77" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7" />
+            <rect x="36" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9" />
+            <rect x="55.5" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9" />
+            <rect x="75" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9" />
+            <path d="M28 43 L60 24 L92 43" stroke={C.accent} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="28" y1="43" x2="92" y2="43" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" />
+            <text x="60" y="65" textAnchor="middle" fontSize="20" fontWeight="700" fontFamily="sans-serif" fill={C.accent}>$</text>
+          </svg>
+        </div>
+
+        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 24, fontWeight: 800, color: C.accent, margin: "0 0 4px" }}>Arquitecto Financiero</h1>
+        <p style={{ color: C.t2, fontSize: 14, marginBottom: 24 }}>Toma el control de tu dinero</p>
+
+        <div style={{ background: C.card, borderRadius: 16, padding: 28, border: `1px solid ${C.border}` }}>
           <h2 style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginBottom: 20, fontFamily: "'Sora', sans-serif" }}>
             {isRegister ? "Crear cuenta" : "Iniciar sesión"}
           </h2>
 
-          {/* Google Button */}
           <button onClick={handleGoogle} style={{
             width: "100%", padding: 12, borderRadius: 10,
             background: C.bg, border: `1px solid ${C.border}`,
@@ -100,39 +109,22 @@ export default function LoginScreen() {
             <div style={{ flex: 1, height: 1, background: C.border }} />
           </div>
 
-          {/* Email & Password */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
-            <input
-              type="email" placeholder="Tu correo electrónico" value={email}
+            <input type="email" placeholder="Tu correo electrónico" value={email}
               onChange={e => setEmail(e.target.value)}
-              style={{
-                width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 8,
-                background: C.bg, border: `1px solid ${C.border}`,
-                color: C.t1, fontSize: 14, outline: "none",
-              }}
-            />
-            <input
-              type="password" placeholder="Contraseña (mín. 6 caracteres)" value={password}
+              style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t1, fontSize: 14, outline: "none" }} />
+            <input type="password" placeholder="Contraseña (mín. 6 caracteres)" value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              style={{
-                width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 8,
-                background: C.bg, border: `1px solid ${C.border}`,
-                color: C.t1, fontSize: 14, outline: "none",
-              }}
-            />
+              style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.t1, fontSize: 14, outline: "none" }} />
           </div>
 
-          {error && (
-            <p style={{ color: C.danger, fontSize: 12, marginBottom: 12 }}>{error}</p>
-          )}
+          {error && <p style={{ color: C.danger, fontSize: 12, marginBottom: 12 }}>{error}</p>}
 
           <button onClick={handleSubmit} disabled={loading || !email || !password} style={{
-            width: "100%", padding: 14, borderRadius: 10,
-            background: C.accent, border: "none",
-            color: "#0B1120", fontSize: 15, fontWeight: 700, cursor: "pointer",
-            opacity: loading || !email || !password ? 0.5 : 1,
-            marginBottom: 14,
+            width: "100%", padding: 14, borderRadius: 10, background: C.accent, border: "none",
+            color: "#050A14", fontSize: 15, fontWeight: 700, cursor: "pointer",
+            opacity: loading || !email || !password ? 0.5 : 1, marginBottom: 14,
           }}>
             {loading ? "Cargando..." : isRegister ? "Crear cuenta 🚀" : "Entrar"}
           </button>
@@ -145,10 +137,6 @@ export default function LoginScreen() {
             </span>
           </p>
         </div>
-
-        <p style={{ color: C.t3, fontSize: 10, marginTop: 20 }}>
-          🌱 Tu primer presupuesto es gratis. Sin compromisos.
-        </p>
       </div>
     </div>
   );
