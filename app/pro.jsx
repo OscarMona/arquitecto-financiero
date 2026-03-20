@@ -322,33 +322,37 @@ export default function AppPro({ onLogout, onGoCalc }){
             </div></div>
           {presVsReal.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>📊 Presupuesto vs Real</div>
             {(()=>{
+              const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+              const ingReal=ingMes;
+              const ingPct=ingPres>0?Math.min((ingReal/ingPres)*100,150):0;
+              const ingShort=ingReal<ingPres&&ingPres>0;
               const totalPres=presVsReal.reduce((s,c)=>s+c.pres,0);
               const totalReal=presVsReal.reduce((s,c)=>s+c.real,0);
               const pct=totalPres>0?Math.min((totalReal/totalPres)*100,150):0;
               const over=totalReal>totalPres&&totalPres>0;
-              const color=over?C.danger:pct>80?C.warning:C.accent;
+              const colorGasto=over?C.danger:pct>80?C.warning:C.accent;
               const excedidas=presVsReal.filter(c=>c.over).length;
-              return<div style={{background:C.bg,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
-                  <div>
-                    <div style={{fontSize:11,color:C.t3,marginBottom:2}}>Gasto total del mes</div>
-                    <div style={{fontSize:22,fontWeight:800,color}}>{fmt(totalReal)}</div>
+              return<>
+                {ingPres>0&&<div style={{background:C.bg,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
+                    <div><div style={{fontSize:11,color:C.t3,marginBottom:2}}>💰 Ingresos del mes</div><div style={{fontSize:20,fontWeight:800,color:ingShort?C.warning:C.accent}}>{fmt(ingReal)}</div></div>
+                    <div style={{textAlign:"right"}}><div style={{fontSize:11,color:C.t3,marginBottom:2}}>de {fmt(ingPres)} esperado</div><div style={{fontSize:15,fontWeight:700,color:ingShort?C.warning:C.accent}}>{Math.round(ingPct)}%</div></div>
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:11,color:C.t3,marginBottom:2}}>de {fmt(totalPres)} presupuestado</div>
-                    <div style={{fontSize:16,fontWeight:700,color}}>{Math.round(pct)}%</div>
+                  <div style={{height:6,background:C.border,borderRadius:3,overflow:"hidden",marginBottom:4}}><div style={{height:"100%",width:`${Math.min(ingPct,100)}%`,background:ingShort?C.warning:C.accent,borderRadius:3,transition:"width 0.5s"}}/></div>
+                  <span style={{fontSize:10,fontWeight:600,color:ingShort?C.warning:C.accent}}>{ingReal>=ingPres?"✅ Meta de ingresos cumplida":ingReal>0?`⚠️ Faltan ${fmt(ingPres-ingReal)} para tu meta`:"Sin ingresos registrados este mes"}</span>
+                </div>}
+                <div style={{background:C.bg,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
+                    <div><div style={{fontSize:11,color:C.t3,marginBottom:2}}>💸 Gasto total del mes</div><div style={{fontSize:20,fontWeight:800,color:colorGasto}}>{fmt(totalReal)}</div></div>
+                    <div style={{textAlign:"right"}}><div style={{fontSize:11,color:C.t3,marginBottom:2}}>de {fmt(totalPres)} presupuestado</div><div style={{fontSize:15,fontWeight:700,color:colorGasto}}>{Math.round(pct)}%</div></div>
+                  </div>
+                  <div style={{height:6,background:C.border,borderRadius:3,overflow:"hidden",marginBottom:4}}><div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:colorGasto,borderRadius:3,transition:"width 0.5s"}}/></div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:10,color:over?C.danger:pct>80?C.warning:C.accent,fontWeight:600}}>{over?`⚠️ Excedido en ${fmt(totalReal-totalPres)}`:pct>80?`⚠️ Casi al límite — quedan ${fmt(totalPres-totalReal)}`:`✅ Te quedan ${fmt(totalPres-totalReal)}`}</span>
+                    {excedidas>0&&<span style={{fontSize:10,color:C.danger}}>{excedidas} categoría{excedidas>1?"s":""} excedida{excedidas>1?"s":""}</span>}
                   </div>
                 </div>
-                <div style={{height:8,background:C.border,borderRadius:4,overflow:"hidden",marginBottom:6}}>
-                  <div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:color,borderRadius:4,transition:"width 0.5s"}}/>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span style={{fontSize:10,color:over?C.danger:pct>80?C.warning:C.accent,fontWeight:600}}>
-                    {over?`⚠️ Excedido en ${fmt(totalReal-totalPres)}`:pct>80?`⚠️ Casi al límite — te quedan ${fmt(totalPres-totalReal)}`:`✅ Te quedan ${fmt(totalPres-totalReal)}`}
-                  </span>
-                  {excedidas>0&&<span style={{fontSize:10,color:C.danger}}>{excedidas} categoría{excedidas>1?"s":""} excedida{excedidas>1?"s":""}</span>}
-                </div>
-              </div>;
+              </>;
             })()}
             {presVsReal.map((c,i)=><Progress key={i} value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>)}</Card>}
           {pieData.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>¿A dónde se va tu dinero?</div><div style={{display:"flex",alignItems:"center",gap:12}}><ResponsiveContainer width="50%" height={130}><PieChart><Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={52} paddingAngle={2}>{pieData.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart></ResponsiveContainer><div style={{flex:1}}>{pieData.slice(0,5).map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><div style={{width:6,height:6,borderRadius:"50%",background:d.color,flexShrink:0}}/><span style={{fontSize:10,color:C.t2,flex:1}}>{d.name}</span><span style={{fontSize:10,fontWeight:600,color:C.t1}}>{fmt(d.value)}</span></div>)}</div></div></Card>}
