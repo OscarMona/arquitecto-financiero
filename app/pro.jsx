@@ -42,9 +42,15 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [aiLoading,setAiLoading]=useState(false);
   const [aiResults,setAiResults]=useState(null);
   const [editingMov,setEditingMov]=useState(null);
+  const [editingCat,setEditingCat]=useState(null);
+  const [editingCatDraft,setEditingCatDraft]=useState({});
   const [prorateados,setProrateados]=useState({});
   const [prorateosRechazados,setProrateosRechazados]=useState({});
   const [saldoInicial,setSaldoInicial]=useState(0);
+  const [deudaTarjetaInicial,setDeudaTarjetaInicial]=useState(0);
+  const [diaCorte,setDiaCorte]=useState(0);
+  const [diaPago,setDiaPago]=useState(0);
+  const [showTipFecha,setShowTipFecha]=useState(false);
   const [showFirstBudget,setShowFirstBudget]=useState(false);
   const [fbStep,setFbStep]=useState(0);
   const [fbDraft,setFbDraft]=useState({});
@@ -70,6 +76,9 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.metas)setMetas(data.metas);
         if(data.onboarded)setOnboarded(data.onboarded);
         if(data.saldoInicial)setSaldoInicial(data.saldoInicial);
+        if(data.deudaTarjetaInicial)setDeudaTarjetaInicial(data.deudaTarjetaInicial);
+        if(data.diaCorte)setDiaCorte(data.diaCorte);
+        if(data.diaPago)setDiaPago(data.diaPago);
         if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
       }
       setLoaded(true);
@@ -81,7 +90,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,prorateosRechazados});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
@@ -170,12 +179,72 @@ export default function AppPro({ onLogout, onGoCalc }){
         {fbStep===0&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:20}}><span style={{fontSize:40}}>💰</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Cuánto ganas al mes?</h2><p style={{color:C.t2,fontSize:13,margin:0}}>Es tu primer presupuesto. Te guiamos paso a paso.</p><p style={{color:C.t3,fontSize:11,margin:"6px 0 0"}}>Si cometes errores, los puedes corregir después en Presupuesto.</p></div>
 
           <div style={{background:C.card,borderRadius:12,padding:14,border:`1px solid ${C.accent}33`,marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:4}}>💳 ¿Con cuánto dinero arrancas hoy?</div>
-            <div style={{fontSize:11,color:C.t2,marginBottom:10,lineHeight:1.5}}>Tu saldo actual en banco + efectivo. Solo afecta el flujo de caja para ver desde dónde partes.</div>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:12,color:C.t3,flex:1}}>Saldo inicial</span>
-              <input type="number" placeholder="$0" value={saldoInicial||""} onChange={e=>setSaldoInicial(parseFloat(e.target.value)||0)} style={{...is,width:140,color:C.accent}}/>
+            <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:4}}>📊 ¿Cómo arrancas hoy?</div>
+            <div style={{fontSize:11,color:C.t2,marginBottom:12,lineHeight:1.5}}>Solo afecta el flujo de caja para ver desde dónde partes realmente.</div>
+
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:C.t3,marginBottom:3}}>🏦 Saldo en banco / efectivo</div>
+              <input type="number" placeholder="$0" value={saldoInicial||""} onChange={e=>setSaldoInicial(parseFloat(e.target.value)||0)} style={{...is,width:"100%",color:C.accent}}/>
             </div>
+
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:C.t3,marginBottom:3}}>💳 Deuda actual en tarjeta de crédito</div>
+              <input type="number" placeholder="$0" value={deudaTarjetaInicial||""} onChange={e=>setDeudaTarjetaInicial(parseFloat(e.target.value)||0)} style={{...is,width:"100%",color:C.purple}}/>
+            </div>
+
+            {deudaTarjetaInicial>0&&<>
+              <div style={{marginBottom:10}}>
+                <div style={{fontSize:10,color:C.t3,marginBottom:6}}>📅 Día de corte <span style={{color:C.t3}}>(cuando el banco congela el saldo)</span></div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {[1,5,10,15,17,20,25,28].map(d=>(
+                    <button key={d} onClick={()=>setDiaCorte(d)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${diaCorte===d?C.purple:C.border}`,background:diaCorte===d?C.purple+"22":"transparent",color:diaCorte===d?C.purple:C.t3,fontSize:11,fontWeight:diaCorte===d?700:400,cursor:"pointer"}}>día {d}</button>
+                  ))}
+                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(diaCorte)&&diaCorte>0?diaCorte:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setDiaCorte(v);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
+                </div>
+              </div>
+
+              <div style={{marginBottom:10}}>
+                <div style={{fontSize:10,color:C.t3,marginBottom:6}}>💰 Día límite de pago <span style={{color:C.t3}}>(cuando tienes que pagar)</span></div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {[1,5,10,15,17,20,25,28].map(d=>(
+                    <button key={d} onClick={()=>setDiaPago(d)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${diaPago===d?C.accent:C.border}`,background:diaPago===d?C.accent+"22":"transparent",color:diaPago===d?C.accent:C.t3,fontSize:11,fontWeight:diaPago===d?700:400,cursor:"pointer"}}>día {d}</button>
+                  ))}
+                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(diaPago)&&diaPago>0?diaPago:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setDiaPago(v);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
+                </div>
+                <button onClick={()=>setShowTipFecha(!showTipFecha)} style={{marginTop:8,background:"none",border:"none",color:C.purple,fontSize:11,cursor:"pointer",padding:0,textDecoration:"underline"}}>
+                  {showTipFecha?"▲ Ocultar":"❓ No sé mis fechas — ¿cómo las consulto?"}
+                </button>
+                {showTipFecha&&<div style={{marginTop:8,padding:"10px 12px",background:C.bg,borderRadius:8,border:`1px solid ${C.purple}33`}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.purple,marginBottom:6}}>¿Cómo encontrar tus fechas?</div>
+                  {[
+                    {banco:"BBVA",tip:"App BBVA → tu tarjeta → Ver detalle → busca 'Fecha de corte' y 'Fecha límite de pago'"},
+                    {banco:"Banamex / Citibanamex",tip:"App Citibanamex → Tarjetas → selecciona tu tarjeta → Estado de cuenta"},
+                    {banco:"Santander",tip:"App Santander → Tarjetas → Detalle de tarjeta → Fechas de corte"},
+                    {banco:"HSBC",tip:"App HSBC → Tarjetas → Ver estado de cuenta → Fechas"},
+                    {banco:"Banorte",tip:"App Banorte → Tarjetas → Detalle → Información de la tarjeta"},
+                  ].map((b,i)=>(
+                    <div key={i} style={{marginBottom:6,paddingBottom:6,borderBottom:i<4?`1px solid ${C.border}22`:"none"}}>
+                      <div style={{fontSize:10,fontWeight:700,color:C.t1}}>{b.banco}</div>
+                      <div style={{fontSize:10,color:C.t3,lineHeight:1.4}}>{b.tip}</div>
+                    </div>
+                  ))}
+                  <div style={{fontSize:10,color:C.t2,marginTop:6,padding:"6px 8px",background:C.card,borderRadius:6}}>
+                    💡 Si no puedes consultarlo ahorita, puedes dejarlo en blanco y completarlo después en tu Perfil.
+                  </div>
+                </div>}
+              </div>
+            </>}
+
+            {(saldoInicial>0||deudaTarjetaInicial>0)&&<div style={{marginTop:10,padding:"8px 10px",borderRadius:8,background:C.bg}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <span style={{fontSize:11,color:C.t2}}>Liquidez disponible hoy</span>
+                <span style={{fontSize:13,fontWeight:800,color:C.accent}}>{fmt(saldoInicial)}</span>
+              </div>
+              {deudaTarjetaInicial>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:11,color:C.t2}}>Comprometido en tarjeta{diaPago>0?` (pago día ${diaPago})`:diaCorte>0?` (corte día ${diaCorte})`:""}</span>
+                <span style={{fontSize:13,fontWeight:800,color:C.purple}}>−{fmt(deudaTarjetaInicial)}</span>
+              </div>}
+            </div>}
           </div>
 
           <div style={{fontSize:11,fontWeight:700,color:C.t2,marginBottom:8}}>Ingresos mensuales</div>
@@ -239,7 +308,7 @@ export default function AppPro({ onLogout, onGoCalc }){
       <div style={{padding:"14px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,color:C.t3}}>Hola, {nombre} 👋</div><div style={{fontSize:15,fontWeight:700}}>{mes} {año}</div></div><div style={{display:"flex",gap:6}}><button onClick={()=>{const i=MESES.indexOf(mes);if(i===0){setMes(MESES[11]);setAño(año-1);}else setMes(MESES[i-1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>←</button><button onClick={()=>{const i=MESES.indexOf(mes);if(i===11){setMes(MESES[0]);setAño(año+1);}else setMes(MESES[i+1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>→</button></div></div>
 
       <div style={{display:"grid",gridTemplateColumns:tarjetaMes>0?"1fr 1fr 1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,padding:"0 16px 4px"}}>{[{l:"Ingresos",v:ingMes,c:C.accent},{l:"Efectivo",v:efectivoMes,c:C.danger},tarjetaMes>0?{l:"💳 Tarjeta",v:tarjetaMes,c:C.purple}:null,{l:"Apartado",v:ahoMes,c:C.cyan},{l:"Disponible",v:balMes,c:balMes>=0?C.accent:C.danger}].filter(Boolean).map((s,i)=><div key={i} style={{background:C.card,borderRadius:10,padding:"8px 4px",textAlign:"center"}}><div style={{fontSize:8,color:C.t3}}>{s.l}</div><div style={{fontSize:12,fontWeight:700,color:s.c}}>{fmt(s.v)}</div></div>)}</div>
-      {tarjetaMes>0&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>{tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Tu saldo disponible muestra {fmt(balMes)}, pero necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu tarjeta cuando llegue el corte. Tu disponible real es <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}</div>}
+      {(tarjetaMes>0||deudaTarjetaInicial>0)&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{deudaTarjetaInicial>0&&<span style={{fontSize:10,color:C.t3}}> · Deuda anterior: {fmt(deudaTarjetaInicial)}</span>}{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>{tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Tu saldo disponible muestra {fmt(balMes)}, pero necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu tarjeta cuando llegue el corte. Tu disponible real es <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}{deudaTarjetaInicial>0&&<div style={{fontSize:11,color:C.t3,paddingLeft:24,marginTop:4}}>Deuda total incluyendo anterior: <strong style={{color:C.purple}}>{fmt(tarjetaMes+deudaTarjetaInicial-pagosTarjetaMes)}</strong></div>}</div>}
 
       <div style={{padding:"0 16px",animation:"fadeIn 0.3s"}}>
 
@@ -357,6 +426,27 @@ export default function AppPro({ onLogout, onGoCalc }){
                 <tbody>
                   {(()=>{
                     const mesIdx=MESES.indexOf(mes);
+                    // Proyectar pagos de tarjeta según día de corte y día de pago
+                    const pagoTarjetaPorMes=gastos.reduce((acc,g)=>{
+                      if(g.metodo!=="tarjeta"||g.sub==="Pago de tarjeta")return acc;
+                      const diaGasto=parseInt((g.fecha||"").split("-")[2])||1;
+                      const mesGastoIdx=MESES.indexOf(g.mes);
+                      if(mesGastoIdx<0||g.año!==año)return acc;
+                      // Si el gasto es después del corte, entra al ciclo siguiente
+                      const cicloExtra=diaCorte>0&&diaGasto>diaCorte?1:0;
+                      // El mes de pago: mes del gasto + 1 ciclo + si el día de pago es menor al corte, ya es el mes siguiente
+                      let mesPago=(mesGastoIdx+1+cicloExtra)%12;
+                      // Si tiene día de pago definido y es antes del corte del mes siguiente, ajustar
+                      acc[mesPago]=(acc[mesPago]||0)+Math.abs(g.monto);
+                      return acc;
+                    },{});
+                    // Deuda inicial cae en el próximo día de pago
+                    if(deudaTarjetaInicial>0){
+                      const hoy=new Date().getDate();
+                      // Si ya pasó el día de pago este mes, cae el mes siguiente
+                      const mesPagoDeuda=diaPago>0&&hoy<=diaPago?mesIdx:(mesIdx+1)%12;
+                      pagoTarjetaPorMes[mesPagoDeuda]=(pagoTarjetaPorMes[mesPagoDeuda]||0)+deudaTarjetaInicial;
+                    }
                     const flujos=MESES.map((mn,i)=>{
                       const pk2=`${mn}_${año}`;
                       const pm=pres[pk2]||{};
@@ -366,16 +456,17 @@ export default function AppPro({ onLogout, onGoCalc }){
                       const netoP=ingresoP-egresoP;
                       const gm=gastos.filter(g=>g.mes===mn&&g.año===año);
                       const ingresoR=gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0);
-                      const egresoR=gm.filter(g=>isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0);
-                      const netoR=gm.length>0?ingresoR-egresoR:null;
-                      return{netoP,netoR,prog,pasado:i<mesIdx,actual:i===mesIdx};
+                      const egresoR=gm.filter(g=>isGasto(g.cat)&&g.sub!=="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0);
+                      const pagoTarjeta=pagoTarjetaPorMes[i]||0;
+                      const netoR=gm.length>0?ingresoR-egresoR-pagoTarjeta:null;
+                      return{netoP,netoR,prog,pagoTarjeta,pasado:i<mesIdx,actual:i===mesIdx};
                     });
-                    let acumP=saldoInicial,acumR=saldoInicial;
+                    let acumP=saldoInicial-deudaTarjetaInicial,acumR=saldoInicial-deudaTarjetaInicial;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
                     const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
                     return[
                       <tr key="pres" style={{borderTop:`1px solid ${C.border}33`}}>
-                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Neto <span style={{background:C.blue+"22",color:C.blue,borderRadius:3,padding:"1px 4px"}}>P</span></td>
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>Neto presupuestado</td>
                         {flujos.map((f,i)=>{
                           const c=f.netoP<0?C.danger:f.netoP<2000?C.warning:C.accent;
                           const pill=f.prog.length>0?` 📅`:"";
@@ -384,7 +475,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                         })}
                       </tr>,
                       <tr key="real">
-                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Neto <span style={{background:C.accent+"22",color:C.accent,borderRadius:3,padding:"1px 4px"}}>R</span></td>
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>Neto real</td>
                         {flujos.map((f,i)=>{
                           if(f.netoR===null)return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.t3}}>—</td>;
                           const c=f.netoR<0?C.danger:f.netoR<2000?C.warning:C.accent;
@@ -392,9 +483,17 @@ export default function AppPro({ onLogout, onGoCalc }){
                           return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:c,fontWeight:600,whiteSpace:"nowrap"}}>{fmt(f.netoR)} <span style={{fontSize:9,color:desv>=0?C.accent:C.danger}}>{desv>=0?"+":""}{fmt(desv)}</span></td>;
                         })}
                       </tr>,
+                      flujos.some(f=>f.pagoTarjeta>0)&&<tr key="tarjeta">
+                        <td style={{padding:"4px 7px",color:C.purple,fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>💳 Pago tarjeta</td>
+                        {flujos.map((f,i)=>(
+                          f.pagoTarjeta>0
+                            ?<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.purple,fontWeight:600,whiteSpace:"nowrap"}}>−{fmt(f.pagoTarjeta)}</td>
+                            :<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.t3}}>—</td>
+                        ))}
+                      </tr>,
                       <tr key="div" style={{borderTop:`2px solid ${C.border}`}}><td colSpan={13}></td></tr>,
                       <tr key="acump">
-                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acum. <span style={{background:C.blue+"22",color:C.blue,borderRadius:3,padding:"1px 4px"}}>P</span></td>
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acumulado presupuestado</td>
                         {acumPA.map((a,i)=>{
                           const c=a<0?C.danger:a<5000?C.warning:C.accent;
                           const bg=a<0?C.danger+"22":a<5000?C.warning+"22":"transparent";
@@ -402,7 +501,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                         })}
                       </tr>,
                       <tr key="acumr">
-                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acum. <span style={{background:C.accent+"22",color:C.accent,borderRadius:3,padding:"1px 4px"}}>R</span></td>
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acumulado real</td>
                         {acumRA.map((a,i)=>{
                           if(a===null)return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.t3}}>—</td>;
                           const c=a<0?C.danger:a<5000?C.warning:C.accent;
@@ -415,7 +514,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                 </tbody>
               </table>
             </div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingLeft:6}}>{[{l:"P = Presupuestado",c:C.blue},{l:"R = Real",c:C.accent},{l:"📅 = Gasto programado",c:C.warning}].map((l,i)=><span key={i} style={{fontSize:9,color:l.c}}>{l.l}</span>)}</div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingLeft:6}}>{[{l:"Presupuestado",c:C.blue},{l:"Real",c:C.accent},{l:"📅 Gasto programado",c:C.warning}].map((l,i)=><span key={i} style={{fontSize:9,color:l.c}}>{l.l}</span>)}</div>
           </Card>}
 
         </div>}</div>}
@@ -440,8 +539,71 @@ export default function AppPro({ onLogout, onGoCalc }){
 
         {tab==="presupuesto"&&<div>{!hasBudget?<Card style={{textAlign:"center",padding:30}}><p style={{color:C.t3}}>Aún no tienes presupuesto.</p><button onClick={()=>{setShowFirstBudget(true);setFbStep(0);setFbDraft({});}} style={{padding:"12px 24px",borderRadius:10,border:"none",background:C.accent,color:"#000",fontSize:14,fontWeight:700,cursor:"pointer",marginTop:8}}>Configurar presupuesto</button></Card>:<div>
           <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:4}}>Presupuesto {mes} {año}</div><p style={{fontSize:11,color:C.t3,margin:"0 0 12px"}}>Cambia un monto y aplica de este mes en adelante</p>
-          {CATEGORIAS.map(cat=>{const subs=allSubsFor(cat.key,presMes);const total=subs.reduce((s,sub)=>s+(parseFloat(presMes[sub.key])||0),0);if(total===0&&cat.key!=="Ingresos")return null;return<Card key={cat.key} style={{marginBottom:8,borderLeft:`3px solid ${cat.color}`,padding:12}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span></div>{subs.map(({key,name})=>{const val=presMes[key]||0;if(val===0&&cat.key!=="Ingresos")return null;return<EditablePresItem key={key} name={name} value={val} color={cat.color} onApply={nv=>applyForward(key,nv)}/>;})}</Card>;})}
-          <div style={{marginTop:16}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>📅 Gastos programados</div>{programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:C.card,borderRadius:8,marginBottom:4,border:`1px solid ${C.border}`}}><span style={{fontSize:14}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:12,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}<ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>{programados.length>0&&<Card style={{marginTop:12}}><div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:8}}>Próximos 12 meses</div>{Array.from({length:12},(_,i)=>{const m=(MESES.indexOf(mes)+i)%12;const a=año+Math.floor((MESES.indexOf(mes)+i)/12);const gp=programados.filter(p=>p.mes===m).reduce((s,p)=>s+p.monto,0);if(gp===0)return null;return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${C.border}11`}}><span style={{fontSize:11,color:C.t2}}>{MESES[m]} {a}</span><span style={{fontSize:11,fontWeight:700,color:C.warning}}>⚠️ {fmt(gp)}</span></div>;}).filter(Boolean)}</Card>}</div>
+          {CATEGORIAS.map(cat=>{
+            const subs=allSubsFor(cat.key,presMes);
+            const subsConExtras=[...subs,...Object.keys(presMes).filter(k=>k.startsWith(`${cat.key}__`)&&!subs.find(s=>s.key===k)).map(k=>({key:k,name:k.split("__")[1],isExtra:true}))];
+            const total=subsConExtras.reduce((s,sub)=>s+(parseFloat(presMes[sub.key])||0),0);
+            const isOpen=editingCat===cat.key;
+            if(total===0&&cat.key!=="Ingresos"&&!isOpen)return(
+              <button key={cat.key} onClick={()=>{
+                const draft={};subsConExtras.forEach(s=>{draft[s.key]=presMes[s.key]||"";});
+                setEditingCatDraft(draft);setEditingCat(cat.key);
+              }} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,background:C.card,border:`1px dashed ${cat.color}33`,marginBottom:6,cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:14}}>{cat.icon}</span>
+                <span style={{fontSize:12,color:C.t3,flex:1}}>{cat.label}</span>
+                <span style={{fontSize:11,color:cat.color}}>+ Agregar →</span>
+              </button>
+            );
+            if(isOpen){
+              const is={width:"100%",boxSizing:"border-box",padding:"7px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:13,fontWeight:600,outline:"none",textAlign:"right"};
+              const allSubs=(SUBCATS[cat.key]||[]).map(s=>({key:`${cat.key}__${s}`,name:s}));
+              const extras=Object.keys(editingCatDraft).filter(k=>k.startsWith(`${cat.key}__`)&&!allSubs.find(s=>s.key===k)).map(k=>({key:k,name:k.split("__")[1],isExtra:true}));
+              const todosLosSubs=[...allSubs,...extras];
+              return(
+                <Card key={cat.key} style={{marginBottom:8,borderLeft:`3px solid ${cat.color}`,padding:12,border:`1px solid ${cat.color}44`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <span style={{fontSize:13,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>
+                    <button onClick={()=>setEditingCat(null)} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:16}}>✕</button>
+                  </div>
+                  {todosLosSubs.map(({key,name,isExtra})=>(
+                    <div key={key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      <span style={{fontSize:11,color:isExtra?cat.color:C.t2,flex:1}}>{name}{isExtra?" ✨":""}</span>
+                      <input type="number" placeholder="$0" value={editingCatDraft[key]||""} onChange={e=>setEditingCatDraft(p=>({...p,[key]:e.target.value}))} style={{...is,width:120}}/>
+                    </div>
+                  ))}
+                  {addingTo===cat.key
+                    ?<div style={{display:"flex",gap:6,marginTop:4}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre del concepto" style={{flex:1,padding:"7px 10px",borderRadius:8,background:C.bg,border:`1px solid ${cat.color}44`,color:C.t1,fontSize:12,outline:"none"}} autoFocus/><button onClick={()=>{if(!extraName.trim())return;const k=`${cat.key}__${extraName.trim()}`;setEditingCatDraft(p=>({...p,[k]:""}));setExtraName("");setAddingTo(null);}} style={{padding:"7px 12px",borderRadius:8,border:"none",background:cat.color,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>✕</button></div>
+                    :<button onClick={()=>setAddingTo(cat.key)} style={{width:"100%",padding:7,borderRadius:8,border:`1px dashed ${cat.color}33`,background:"transparent",color:cat.color,fontSize:11,cursor:"pointer",marginTop:4}}>+ Agregar concepto</button>
+                  }
+                  <button onClick={()=>{
+                    Object.entries(editingCatDraft).forEach(([k,v])=>applyForward(k,v||"0"));
+                    setEditingCat(null);
+                    showToast(`✅ ${cat.label} actualizado`);
+                  }} style={{width:"100%",padding:10,borderRadius:8,border:"none",background:cat.color,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",marginTop:10}}>Guardar cambios →</button>
+                </Card>
+              );
+            }
+            return(
+              <Card key={cat.key} style={{marginBottom:8,borderLeft:`3px solid ${cat.color}`,padding:12,cursor:"pointer"}} onClick={()=>{
+                const draft={};subsConExtras.forEach(s=>{draft[s.key]=presMes[s.key]||"";});
+                setEditingCatDraft(draft);setEditingCat(cat.key);
+              }}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>
+                    <span style={{fontSize:10,color:C.t3}}>✏️</span>
+                  </div>
+                </div>
+                {subsConExtras.filter(s=>parseFloat(presMes[s.key]||0)>0).map(({key,name})=>(
+                  <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"2px 0"}}>
+                    <span style={{fontSize:10,color:C.t3}}>{name}</span>
+                    <span style={{fontSize:10,fontWeight:600,color:C.t2}}>{fmt(presMes[key]||0)}</span>
+                  </div>
+                ))}
+              </Card>
+            );
+          })}          <div style={{marginTop:16}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>📅 Gastos programados</div>{programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:C.card,borderRadius:8,marginBottom:4,border:`1px solid ${C.border}`}}><span style={{fontSize:14}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:12,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}<ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>{programados.length>0&&<Card style={{marginTop:12}}><div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:8}}>Próximos 12 meses</div>{Array.from({length:12},(_,i)=>{const m=(MESES.indexOf(mes)+i)%12;const a=año+Math.floor((MESES.indexOf(mes)+i)/12);const gp=programados.filter(p=>p.mes===m).reduce((s,p)=>s+p.monto,0);if(gp===0)return null;return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${C.border}11`}}><span style={{fontSize:11,color:C.t2}}>{MESES[m]} {a}</span><span style={{fontSize:11,fontWeight:700,color:C.warning}}>⚠️ {fmt(gp)}</span></div>;}).filter(Boolean)}</Card>}</div>
         </div>}<button onClick={()=>{if(confirm("Reiniciar presupuesto? Esto borra tu plan actual.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{width:"100%",padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer",marginTop:16}}>Reiniciar presupuesto desde cero</button></div>}
 
         {tab==="perfil"&&<div>
