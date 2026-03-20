@@ -18,7 +18,7 @@ const catLabel = k => CATEGORIAS.find(c=>c.key===k)?.label||k;
 const catIcon = k => CATEGORIAS.find(c=>c.key===k)?.icon||"📦";
 const isApartado = c => c==="Ahorro";
 const isGasto = c => c!=="Ingresos"&&!isApartado(c);
-const Card = ({children,style}) => <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:16,...style}}>{children}</div>;
+const Card = ({children,style,onClick}) => <div onClick={onClick} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:16,...style}}>{children}</div>;
 const Progress = ({value,max,color=C.accent,label:l}) => { const p=max>0?Math.min((value/max)*100,150):0; const o=value>max&&max>0; return <div style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:C.t2}}>{l}</span><span style={{fontSize:11,color:o?C.danger:C.t2,fontWeight:600}}>{fmt(value)}/{fmt(max)}{o?" ⚠️":""}</span></div><div style={{height:6,background:C.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(p,100)}%`,background:o?C.danger:p>80?C.warning:color,borderRadius:3,transition:"width 0.5s"}}/></div></div>; };
 
 export default function AppPro({ onLogout, onGoCalc }){
