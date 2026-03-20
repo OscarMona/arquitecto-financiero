@@ -46,6 +46,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [editingCatDraft,setEditingCatDraft]=useState({});
   const [prorateados,setProrateados]=useState({});
   const [prorateosRechazados,setProrateosRechazados]=useState({});
+  const [programadosPagados,setProgramadosPagados]=useState({});
   const [saldoInicial,setSaldoInicial]=useState(0);
   const [deudaTarjetaInicial,setDeudaTarjetaInicial]=useState(0);
   const [diaCorte,setDiaCorte]=useState(0);
@@ -80,6 +81,7 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.diaCorte)setDiaCorte(data.diaCorte);
         if(data.diaPago)setDiaPago(data.diaPago);
         if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
+        if(data.programadosPagados)setProgramadosPagados(data.programadosPagados);
       }
       setLoaded(true);
     };
@@ -90,7 +92,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
@@ -603,7 +605,75 @@ export default function AppPro({ onLogout, onGoCalc }){
                 ))}
               </Card>
             );
-          })}          <div style={{marginTop:16}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>📅 Gastos programados</div>{programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:C.card,borderRadius:8,marginBottom:4,border:`1px solid ${C.border}`}}><span style={{fontSize:14}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:12,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}<ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>{programados.length>0&&<Card style={{marginTop:12}}><div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:8}}>Próximos 12 meses</div>{Array.from({length:12},(_,i)=>{const m=(MESES.indexOf(mes)+i)%12;const a=año+Math.floor((MESES.indexOf(mes)+i)/12);const gp=programados.filter(p=>p.mes===m).reduce((s,p)=>s+p.monto,0);if(gp===0)return null;return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${C.border}11`}}><span style={{fontSize:11,color:C.t2}}>{MESES[m]} {a}</span><span style={{fontSize:11,fontWeight:700,color:C.warning}}>⚠️ {fmt(gp)}</span></div>;}).filter(Boolean)}</Card>}</div>
+          })}          <div style={{marginTop:16}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>📅 Gastos programados</div>
+            {programados.map(p=>{
+              const pagadoEsteAño=programadosPagados[`${p.id}_${año}`];
+              const mesIdx=MESES.indexOf(mes);
+              const yaPaso=p.mes<mesIdx;
+              return(
+                <div key={p.id} style={{background:C.card,borderRadius:10,marginBottom:6,border:`1px solid ${pagadoEsteAño?C.accent+"33":C.border}`,overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px"}}>
+                    <span style={{fontSize:16}}>{pagadoEsteAño?"✅":"📅"}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,color:pagadoEsteAño?C.t3:C.t1,fontWeight:600,textDecoration:pagadoEsteAño?"line-through":"none"}}>{p.nombre}</div>
+                      <div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}{pagadoEsteAño?` · Pagado ${año} ✓`:""}</div>
+                    </div>
+                    <span style={{fontSize:12,fontWeight:700,color:pagadoEsteAño?C.t3:C.warning}}>{fmt(p.monto)}</span>
+                    <button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:12}}>✕</button>
+                  </div>
+                  {!pagadoEsteAño&&(yaPaso||p.mes===mesIdx)&&<div style={{padding:"0 12px 10px"}}>
+                    <button onClick={()=>{
+                      // Marcar como pagado este año
+                      setProgramadosPagados(prev=>({...prev,[`${p.id}_${año}`]:true}));
+                      // Calcular meses hasta el mismo mes del año siguiente
+                      const mesTarget=p.mes;
+                      const mesesHasta=mesTarget>=mesIdx?(12-mesIdx+mesTarget):12+(mesTarget-mesIdx);
+                      if(mesesHasta>0&&p.repite){
+                        // Prorratear para el siguiente año
+                        const porMes=Math.ceil(p.monto/mesesHasta);
+                        const ci=ALL_PERIODS.findIndex(pp=>pp.mes===mes&&pp.año===año);
+                        if(ci>=0){
+                          setPres(prev=>{
+                            const up={...prev};
+                            for(let i=0;i<mesesHasta;i++){
+                              const period=ALL_PERIODS[ci+i];
+                              if(!period)break;
+                              const ex={...(up[period.key]||{})};
+                              const itemKey=`Ahorro__Próximo ${p.nombre}`;
+                              ex[itemKey]=(parseFloat(ex[itemKey])||0)+porMes;
+                              ex["Ahorro"]=(parseFloat(ex["Ahorro"])||0)+porMes;
+                              up[period.key]=ex;
+                            }
+                            return up;
+                          });
+                          showToast(`✅ Pagado. Prorateando ${fmt(porMes)}/mes para el ${año+1}`);
+                        }
+                      } else {
+                        showToast(`✅ Marcado como pagado en ${año}`);
+                      }
+                    }} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"none",background:C.accent+"15",color:C.accent,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"left"}}>
+                      ✅ Ya lo pagué — prepararme para {año+1}
+                    </button>
+                  </div>}
+                </div>
+              );
+            })}
+            <ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>
+            {programados.length>0&&<Card style={{marginTop:12}}>
+              <div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:8}}>Próximos 12 meses</div>
+              {Array.from({length:12},(_,i)=>{
+                const mi=(MESES.indexOf(mes)+i)%12;
+                const a=año+Math.floor((MESES.indexOf(mes)+i)/12);
+                const gp=programados.filter(p=>p.mes===mi&&!programadosPagados[`${p.id}_${a}`]).reduce((s,p)=>s+p.monto,0);
+                if(gp===0)return null;
+                return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:`1px solid ${C.border}11`}}>
+                  <span style={{fontSize:11,color:C.t2}}>{MESES[mi]} {a}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:C.warning}}>⚠️ {fmt(gp)}</span>
+                </div>;
+              }).filter(Boolean)}
+            </Card>}
+          </div>
         </div>}<button onClick={()=>{if(confirm("Reiniciar presupuesto? Esto borra tu plan actual.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{width:"100%",padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer",marginTop:16}}>Reiniciar presupuesto desde cero</button></div>}
 
         {tab==="perfil"&&<div>
