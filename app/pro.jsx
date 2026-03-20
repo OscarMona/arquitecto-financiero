@@ -587,14 +587,17 @@ export default function AppPro({ onLogout, onGoCalc }){
             }
             return(
               <Card key={cat.key} style={{marginBottom:8,borderLeft:`3px solid ${cat.color}`,padding:12,cursor:"pointer"}} onClick={()=>{
-                const draft={};subsConExtras.forEach(s=>{draft[s.key]=presMes[s.key]||"";});
+                const draft={};
+                const todosSubs=(SUBCATS[cat.key]||[]).map(s=>(`${cat.key}__${s}`));
+                const extrasEnPres=Object.keys(presMes).filter(k=>k.startsWith(`${cat.key}__`)&&!todosSubs.includes(k));
+                [...todosSubs,...extrasEnPres].forEach(k=>{draft[k]=presMes[k]||"";});
                 setEditingCatDraft(draft);setEditingCat(cat.key);
               }}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     <span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>
-                    <span style={{fontSize:10,color:C.t3}}>✏️</span>
+                    <span style={{fontSize:10,color:C.t3}}>✏️ editar</span>
                   </div>
                 </div>
                 {subsConExtras.filter(s=>parseFloat(presMes[s.key]||0)>0).map(({key,name})=>(
