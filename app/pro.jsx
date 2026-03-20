@@ -43,6 +43,8 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [aiResults,setAiResults]=useState(null);
   const [editingMov,setEditingMov]=useState(null);
   const [prorateados,setProrateados]=useState({});
+  const [prorateosRechazados,setProrateosRechazados]=useState({});
+  const [saldoInicial,setSaldoInicial]=useState(0);
   const [showFirstBudget,setShowFirstBudget]=useState(false);
   const [fbStep,setFbStep]=useState(0);
   const [fbDraft,setFbDraft]=useState({});
@@ -67,6 +69,8 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.programados)setProgramados(data.programados);
         if(data.metas)setMetas(data.metas);
         if(data.onboarded)setOnboarded(data.onboarded);
+        if(data.saldoInicial)setSaldoInicial(data.saldoInicial);
+        if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
       }
       setLoaded(true);
     };
@@ -77,7 +81,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,prorateosRechazados});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
@@ -164,6 +168,17 @@ export default function AppPro({ onLogout, onGoCalc }){
         <div style={{display:"flex",gap:4,marginBottom:20}}>{["Ingresos","Egresos","Programados"].map((s,i)=><div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=fbStep?C.accent:C.border}}/>)}</div>
 
         {fbStep===0&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:20}}><span style={{fontSize:40}}>💰</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Cuánto ganas al mes?</h2><p style={{color:C.t2,fontSize:13,margin:0}}>Es tu primer presupuesto. Te guiamos paso a paso.</p><p style={{color:C.t3,fontSize:11,margin:"6px 0 0"}}>Si cometes errores, los puedes corregir después en Presupuesto.</p></div>
+
+          <div style={{background:C.card,borderRadius:12,padding:14,border:`1px solid ${C.accent}33`,marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:4}}>💳 ¿Con cuánto dinero arrancas hoy?</div>
+            <div style={{fontSize:11,color:C.t2,marginBottom:10,lineHeight:1.5}}>Tu saldo actual en banco + efectivo. Solo afecta el flujo de caja para ver desde dónde partes.</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:12,color:C.t3,flex:1}}>Saldo inicial</span>
+              <input type="number" placeholder="$0" value={saldoInicial||""} onChange={e=>setSaldoInicial(parseFloat(e.target.value)||0)} style={{...is,width:140,color:C.accent}}/>
+            </div>
+          </div>
+
+          <div style={{fontSize:11,fontWeight:700,color:C.t2,marginBottom:8}}>Ingresos mensuales</div>
           {allSubsWithExtras("Ingresos").map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:12,color:isExtra?C.accent:C.t2,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbDraft[key]||""} onChange={e=>setFb(key,e.target.value)} style={{...is,width:140,color:C.accent}}/></div>)}
           {addingTo==="Ingresos"?<div style={{display:"flex",gap:6,marginTop:6}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre (ej: Freelance)" style={{flex:1,padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.accent}44`,color:C.t1,fontSize:12,outline:"none"}} autoFocus/><button onClick={()=>addExtra("Ingresos")} style={{padding:"8px 12px",borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"8px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>✕</button></div>:<button onClick={()=>setAddingTo("Ingresos")} style={{width:"100%",padding:8,borderRadius:8,border:`1px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:11,cursor:"pointer",marginTop:6}}>+ Agregar otro ingreso</button>}
           <div style={{display:"flex",justifyContent:"space-between",marginTop:16,padding:"12px 0",borderTop:`1px solid ${C.border}`}}><span style={{fontSize:13,color:C.t3}}>Total ingresos</span><span style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt(tI)}</span></div>
@@ -245,23 +260,39 @@ export default function AppPro({ onLogout, onGoCalc }){
             const mesIdx=MESES.indexOf(mes);
             const mesesRestantes=p.mes>=mesIdx?p.mes-mesIdx:12-(mesIdx-p.mes);
             const yaApartando=Object.entries(presMes).some(([k])=>k.startsWith("Ahorro__")&&k.includes(p.nombre));
-            return p.mes!==mesIdx&&mesesRestantes>0&&!yaApartando&&p.monto>0&&!prorateados[p.id];
+            if(p.mes===mesIdx||mesesRestantes<=0||yaApartando||p.monto<=0||prorateados[p.id])return false;
+            // Lógica de reaparición según proximidad
+            const rechazo=prorateosRechazados[p.id];
+            if(rechazo){
+              const diasDesdeRechazo=Math.floor((Date.now()-rechazo.fecha)/(1000*60*60*24));
+              if(mesesRestantes<=1)return true; // Urgente: siempre mostrar
+              if(mesesRestantes<=3)return diasDesdeRechazo>=7; // Cerca: cada semana
+              return diasDesdeRechazo>=30; // Lejos: cada mes
+            }
+            return true;
           }).map(p=>{
             const mesIdx=MESES.indexOf(mes);
             const mesesRestantes=p.mes>=mesIdx?p.mes-mesIdx:12-(mesIdx-p.mes);
             const porMes=Math.ceil(p.monto/mesesRestantes);
+            const urgente=mesesRestantes<=1;
+            const cerca=mesesRestantes<=3;
+            const borderColor=urgente?C.danger:cerca?C.warning:C.accent;
             return(
-              <Card key={p.id} style={{marginBottom:12,borderColor:C.warning+"44",background:`${C.warning}08`}}>
+              <Card key={p.id} style={{marginBottom:12,borderColor:borderColor+"44",background:`${borderColor}08`}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-                  <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.warning+"25",color:C.warning}}>{MESES[p.mes]}</span>
+                  <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:borderColor+"25",color:borderColor}}>{MESES[p.mes]}</span>
                   <span style={{fontSize:12,fontWeight:700,color:C.t1}}>{p.nombre}</span>
-                  <span style={{fontSize:13,fontWeight:800,color:C.warning,marginLeft:"auto"}}>{fmt(p.monto)}</span>
+                  {urgente&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:4,background:C.danger+"25",color:C.danger,marginLeft:"auto"}}>⚠️ ¡Este mes!</span>}
+                  {!urgente&&<span style={{fontSize:13,fontWeight:800,color:borderColor,marginLeft:"auto"}}>{fmt(p.monto)}</span>}
                 </div>
                 <div style={{fontSize:11,color:C.t2,marginBottom:10,lineHeight:1.5}}>
-                  Faltan <strong style={{color:C.t1}}>{mesesRestantes} {mesesRestantes===1?"mes":"meses"}</strong>. Si prorrateas desde ahora, apartarías <strong style={{color:C.accent}}>{fmt(porMes)}/mes</strong> y no lo sentirías tan pesado.
+                  {urgente
+                    ?<>Este mes tienes que pagar <strong style={{color:C.danger}}>{fmt(p.monto)}</strong>. ¿Ya lo tienes apartado?</>
+                    :<>Faltan <strong style={{color:C.t1}}>{mesesRestantes} {mesesRestantes===1?"mes":"meses"}</strong>. Si prorrateas desde ahora, apartarías <strong style={{color:C.accent}}>{fmt(porMes)}/mes</strong> y no lo sentirías tan pesado.</>
+                  }
                 </div>
-                <div style={{background:C.bg,borderRadius:8,padding:"8px 10px",marginBottom:10}}>
-                  {Array.from({length:Math.min(mesesRestantes,6)},(_, i)=>{
+                {!urgente&&<div style={{background:C.bg,borderRadius:8,padding:"8px 10px",marginBottom:10}}>
+                  {Array.from({length:Math.min(mesesRestantes,6)},(_,i)=>{
                     const idx=(mesIdx+i)%12;
                     const esUltimo=i===mesesRestantes-1||i===5;
                     return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:!esUltimo?`1px solid ${C.border}22`:"none"}}>
@@ -270,8 +301,8 @@ export default function AppPro({ onLogout, onGoCalc }){
                     </div>;
                   })}
                   {mesesRestantes>6&&<div style={{fontSize:9,color:C.t3,textAlign:"center",paddingTop:4}}>...y {mesesRestantes-6} meses más</div>}
-                </div>
-                <div style={{display:"flex",gap:8}}>
+                </div>}
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   <button onClick={()=>{
                     const ci=ALL_PERIODS.findIndex(pp=>pp.mes===mes&&pp.año===año);
                     if(ci<0)return;
@@ -290,8 +321,26 @@ export default function AppPro({ onLogout, onGoCalc }){
                     });
                     setProrateados(prev=>({...prev,[p.id]:true}));
                     showToast(`✅ Prorrateo activado: ${fmt(porMes)}/mes`);
-                  }} style={{flex:2,padding:10,borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Sí, agregar al presupuesto</button>
-                  <button onClick={()=>setProrateados(prev=>({...prev,[p.id]:true}))} style={{flex:1,padding:10,borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>Ahora no</button>
+                  }} style={{width:"100%",padding:10,borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Prorratear — apartar {fmt(porMes)}/mes</button>
+                  <button onClick={()=>{
+                    const mesTarget=ALL_PERIODS.find(pp=>pp.mes===MESES[p.mes]&&pp.año===año);
+                    if(!mesTarget)return;
+                    setPres(prev=>{
+                      const up={...prev};
+                      const ex={...(up[mesTarget.key]||{})};
+                      const itemKey=`Gastos_Fijos__${p.nombre}`;
+                      ex[itemKey]=(parseFloat(ex[itemKey])||0)+p.monto;
+                      ex["Gastos_Fijos"]=(parseFloat(ex["Gastos_Fijos"])||0)+p.monto;
+                      up[mesTarget.key]=ex;
+                      return up;
+                    });
+                    setProrateados(prev=>({...prev,[p.id]:true}));
+                    showToast(`📌 Agregado como gasto en ${MESES[p.mes]}`);
+                  }} style={{width:"100%",padding:10,borderRadius:8,border:`1px solid ${C.border}`,background:C.card,color:C.t2,fontSize:12,fontWeight:600,cursor:"pointer"}}>📌 Solo en {MESES[p.mes]} — pago puntual</button>
+                  <button onClick={()=>{
+                    setProrateosRechazados(prev=>({...prev,[p.id]:{fecha:Date.now(),mesesRestantes}}));
+                    showToast(mesesRestantes<=3?"⏰ Te recordamos en 1 semana":"⏰ Te recordamos el mes que viene");
+                  }} style={{width:"100%",padding:9,borderRadius:8,border:`1px solid ${C.border}33`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>⏰ Ahora no — recordármelo después</button>
                 </div>
               </Card>
             );
@@ -321,7 +370,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                       const netoR=gm.length>0?ingresoR-egresoR:null;
                       return{netoP,netoR,prog,pasado:i<mesIdx,actual:i===mesIdx};
                     });
-                    let acumP=0,acumR=0;
+                    let acumP=saldoInicial,acumR=saldoInicial;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
                     const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
                     return[
