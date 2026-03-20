@@ -42,6 +42,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [aiLoading,setAiLoading]=useState(false);
   const [aiResults,setAiResults]=useState(null);
   const [editingMov,setEditingMov]=useState(null);
+  const [prorateados,setProrateados]=useState({});
   const [showFirstBudget,setShowFirstBudget]=useState(false);
   const [fbStep,setFbStep]=useState(0);
   const [fbDraft,setFbDraft]=useState({});
@@ -169,12 +170,35 @@ export default function AppPro({ onLogout, onGoCalc }){
           <button onClick={()=>setFbStep(1)} disabled={tI<=0} style={{width:"100%",padding:14,borderRadius:12,border:"none",cursor:tI>0?"pointer":"default",background:tI>0?C.accent:C.border,color:tI>0?"#000":C.t3,fontSize:15,fontWeight:700,marginTop:8}}>Continuar a Egresos →</button>
         </div>}
 
-        {fbStep===1&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📋</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿En qué gastas al mes?</h2><p style={{color:C.t2,fontSize:12}}>Pon lo que sepas. Lo que no, déjalo en cero.</p></div>
-          <div style={{maxHeight:400,overflowY:"auto"}}>{CATEGORIAS.filter(c=>c.key!=="Ingresos").map(cat=>{const subs=allSubsWithExtras(cat.key);const total=subs.reduce((s,sub)=>s+(parseFloat(fbDraft[sub.key])||0),0);return(<div key={cat.key} style={{marginBottom:10,background:C.card,borderRadius:10,padding:12,borderLeft:`3px solid ${cat.color}`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:total>0?6:0}}><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>{total>0&&<span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>}</div>{subs.map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}><span style={{fontSize:10,color:isExtra?cat.color:C.t3,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbDraft[key]||""} onChange={e=>setFb(key,e.target.value)} style={{...is,width:110,fontSize:12}}/></div>)}
+        {fbStep===1&&<div style={{animation:"fadeIn 0.3s"}}>
+          <div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📋</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿En qué gastas al mes?</h2><p style={{color:C.t2,fontSize:12}}>Pon lo que sepas. Lo que no, déjalo en cero.</p></div>
+
+          {/* RESUMEN ARRIBA */}
+          <div style={{background:C.card,borderRadius:12,padding:12,border:`1px solid ${C.border}`,marginBottom:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:tE>0?10:0}}>
+              <div style={{textAlign:"center",padding:"8px 4px",background:C.accentDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Ingresos</div><div style={{fontSize:15,fontWeight:700,color:C.accent}}>{fmt(tI)}</div></div>
+              <div style={{textAlign:"center",padding:"8px 4px",background:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Egresos</div><div style={{fontSize:15,fontWeight:700,color:C.danger}}>{fmt(tE)}</div></div>
+              <div style={{textAlign:"center",padding:"8px 4px",background:(tI-tE)>=0?C.accentDim:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Te sobra</div><div style={{fontSize:15,fontWeight:700,color:(tI-tE)>=0?C.accent:C.danger}}>{fmt(tI-tE)}</div></div>
+            </div>
+            {tE>0&&<><div style={{fontSize:10,color:C.t3,marginBottom:6}}>Desglose por categoría:</div>
+            {CATEGORIAS.filter(c=>c.key!=="Ingresos").map(cat=>{const subs=allSubsWithExtras(cat.key);const total=subs.reduce((s,sub)=>s+(parseFloat(fbDraft[sub.key])||0),0);if(total<=0)return null;return<div key={cat.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",borderRadius:7,marginBottom:3,background:C.bg}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:7,height:7,borderRadius:"50%",background:cat.color,flexShrink:0}}/><span style={{fontSize:11,color:C.t2}}>{cat.icon} {cat.label}</span></div><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span></div>;})}
+            </>}
+          </div>
+
+          {/* LISTA DE CATEGORÍAS */}
+          <div style={{maxHeight:380,overflowY:"auto"}}>{CATEGORIAS.filter(c=>c.key!=="Ingresos").map(cat=>{const subs=allSubsWithExtras(cat.key);const total=subs.reduce((s,sub)=>s+(parseFloat(fbDraft[sub.key])||0),0);return(<div key={cat.key} style={{marginBottom:10,background:C.card,borderRadius:10,padding:12,borderLeft:`3px solid ${cat.color}`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:total>0?6:0}}><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>{total>0&&<span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>}</div>{subs.map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}><span style={{fontSize:10,color:isExtra?cat.color:C.t3,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbDraft[key]||""} onChange={e=>setFb(key,e.target.value)} style={{...is,width:110,fontSize:12}}/></div>)}
             {addingTo===cat.key?<div style={{display:"flex",gap:6,marginTop:4}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre del gasto" style={{flex:1,padding:"6px 8px",borderRadius:6,background:C.bg,border:`1px solid ${cat.color}44`,color:C.t1,fontSize:11,outline:"none"}} autoFocus/><button onClick={()=>addExtra(cat.key)} style={{padding:"6px 10px",borderRadius:6,border:"none",background:cat.color,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"6px 8px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:10,cursor:"pointer"}}>✕</button></div>:<button onClick={()=>setAddingTo(cat.key)} style={{width:"100%",padding:6,borderRadius:6,border:`1px dashed ${cat.color}33`,background:"transparent",color:cat.color,fontSize:10,cursor:"pointer",marginTop:4}}>+ Agregar otro</button>}
           </div>);})}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,margin:"12px 0"}}><div style={{textAlign:"center",padding:8,background:C.accentDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3}}>Ingresos</div><div style={{fontSize:14,fontWeight:700,color:C.accent}}>{fmt(tI)}</div></div><div style={{textAlign:"center",padding:8,background:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3}}>Egresos</div><div style={{fontSize:14,fontWeight:700,color:C.danger}}>{fmt(tE)}</div></div><div style={{textAlign:"center",padding:8,background:(tI-tE)>=0?C.accentDim:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3}}>Balance</div><div style={{fontSize:14,fontWeight:700,color:(tI-tE)>=0?C.accent:C.danger}}>{fmt(tI-tE)}</div></div></div>
-          <div style={{display:"flex",gap:8}}><button onClick={()=>setFbStep(0)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>setFbStep(2)} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>Gastos programados →</button></div>
+
+          {/* FRASE MOTIVACIONAL */}
+          {tE>0&&<div style={{margin:"12px 0",padding:"14px 16px",borderRadius:12,textAlign:"center",background:(tI-tE)>=0?`${C.accent}12`:`${C.danger}12`,border:`1px solid ${(tI-tE)>=0?C.accent:C.danger}33`}}>
+            {(tI-tE)>=0
+              ?<><div style={{fontSize:22,marginBottom:4}}>🚀</div><div style={{fontSize:13,color:C.t2,marginBottom:2}}>Con este presupuesto ahorrarás</div><div style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt((tI-tE)*12)} al año</div><div style={{fontSize:11,color:C.t3,marginTop:3}}>{fmt(tI-tE)} cada mes disponibles</div></>
+              :<><div style={{fontSize:22,marginBottom:4}}>⚠️</div><div style={{fontSize:13,color:C.danger,fontWeight:700}}>Tus egresos superan tus ingresos</div><div style={{fontSize:20,fontWeight:800,color:C.danger}}>{fmt(tI-tE)} al mes</div><div style={{fontSize:11,color:C.t3,marginTop:3}}>Revisa tus gastos antes de continuar</div></>
+            }
+          </div>}
+
+          <div style={{display:"flex",gap:8,marginTop:8}}><button onClick={()=>setFbStep(0)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>setFbStep(2)} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>Gastos programados →</button></div>
         </div>}
 
         {fbStep===2&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📅</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Pagos grandes que se vienen?</h2><p style={{color:C.t2,fontSize:12}}>Anualidad, seguro, predial... Si no tienes, sáltalo.</p></div>
@@ -215,6 +239,136 @@ export default function AppPro({ onLogout, onGoCalc }){
           {trend.length>1&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>Tendencia {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={trend}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>fmt(v)}/><Area type="monotone" dataKey="ingresos" stroke={C.accent} fill={C.accent+"20"} strokeWidth={2} name="Ingresos"/><Area type="monotone" dataKey="egresos" stroke={C.danger} fill={C.danger+"20"} strokeWidth={2} name="Gastos"/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
           {projection.some(p=>p.hasPres)&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>🎯 Proyección {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={projection.filter(p=>p.hasPres)}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>v!=null?fmt(v):"—"}/><Area type="monotone" dataKey="proyectado" stroke={C.accent} fill={C.accent+"15"} strokeWidth={2} strokeDasharray="6 3" name="Plan"/><Area type="monotone" dataKey="real" stroke={C.cyan} fill={C.cyan+"20"} strokeWidth={3} name="Real" connectNulls/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
           {gMes.length===0&&presVsReal.length===0&&<div style={{textAlign:"center",padding:30,color:C.t3}}><div style={{fontSize:36,marginBottom:8}}>📝</div><p style={{fontSize:13}}>Ve a Registrar para agregar movimientos</p></div>}
+
+          {/* PRORRATEO — tarjetas para gastos programados futuros sin ahorro asignado */}
+          {hasBudget&&programados.filter(p=>{
+            const mesIdx=MESES.indexOf(mes);
+            const mesesRestantes=p.mes>=mesIdx?p.mes-mesIdx:12-(mesIdx-p.mes);
+            const yaApartando=Object.entries(presMes).some(([k])=>k.startsWith("Ahorro__")&&k.includes(p.nombre));
+            return p.mes!==mesIdx&&mesesRestantes>0&&!yaApartando&&p.monto>0&&!prorateados[p.id];
+          }).map(p=>{
+            const mesIdx=MESES.indexOf(mes);
+            const mesesRestantes=p.mes>=mesIdx?p.mes-mesIdx:12-(mesIdx-p.mes);
+            const porMes=Math.ceil(p.monto/mesesRestantes);
+            return(
+              <Card key={p.id} style={{marginBottom:12,borderColor:C.warning+"44",background:`${C.warning}08`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+                  <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,background:C.warning+"25",color:C.warning}}>{MESES[p.mes]}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:C.t1}}>{p.nombre}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:C.warning,marginLeft:"auto"}}>{fmt(p.monto)}</span>
+                </div>
+                <div style={{fontSize:11,color:C.t2,marginBottom:10,lineHeight:1.5}}>
+                  Faltan <strong style={{color:C.t1}}>{mesesRestantes} {mesesRestantes===1?"mes":"meses"}</strong>. Si prorrateas desde ahora, apartarías <strong style={{color:C.accent}}>{fmt(porMes)}/mes</strong> y no lo sentirías tan pesado.
+                </div>
+                <div style={{background:C.bg,borderRadius:8,padding:"8px 10px",marginBottom:10}}>
+                  {Array.from({length:Math.min(mesesRestantes,6)},(_, i)=>{
+                    const idx=(mesIdx+i)%12;
+                    const esUltimo=i===mesesRestantes-1||i===5;
+                    return<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:!esUltimo?`1px solid ${C.border}22`:"none"}}>
+                      <span style={{fontSize:10,color:C.t3}}>{MESES[idx]}</span>
+                      <span style={{fontSize:10,fontWeight:700,color:C.accent}}>+{fmt(porMes)}{i===mesesRestantes-1?" → pago "+fmt(p.monto):""}</span>
+                    </div>;
+                  })}
+                  {mesesRestantes>6&&<div style={{fontSize:9,color:C.t3,textAlign:"center",paddingTop:4}}>...y {mesesRestantes-6} meses más</div>}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>{
+                    const ci=ALL_PERIODS.findIndex(pp=>pp.mes===mes&&pp.año===año);
+                    if(ci<0)return;
+                    setPres(prev=>{
+                      const up={...prev};
+                      for(let i=0;i<mesesRestantes;i++){
+                        const period=ALL_PERIODS[ci+i];
+                        if(!period)break;
+                        const ex={...(up[period.key]||{})};
+                        const itemKey=`Ahorro__Apartado ${p.nombre}`;
+                        ex[itemKey]=(parseFloat(ex[itemKey])||0)+porMes;
+                        ex["Ahorro"]=(parseFloat(ex["Ahorro"])||0)+porMes;
+                        up[period.key]=ex;
+                      }
+                      return up;
+                    });
+                    setProrateados(prev=>({...prev,[p.id]:true}));
+                    showToast(`✅ Prorrateo activado: ${fmt(porMes)}/mes`);
+                  }} style={{flex:2,padding:10,borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Sí, agregar al presupuesto</button>
+                  <button onClick={()=>setProrateados(prev=>({...prev,[p.id]:true}))} style={{flex:1,padding:10,borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>Ahora no</button>
+                </div>
+              </Card>
+            );
+          })}
+
+          {/* FLUJO DE CAJA 12 MESES */}
+          {hasBudget&&<Card style={{marginBottom:12,padding:"14px 10px"}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:12,paddingLeft:6}}>💸 Flujo de caja {año}</div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{borderCollapse:"collapse",minWidth:680,width:"100%",fontSize:10}}>
+                <thead>
+                  <tr>{["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"].map((h,i)=><th key={i} style={{padding:"4px 7px",textAlign:i===0?"left":"right",color:C.t3,fontWeight:600,whiteSpace:"nowrap",borderBottom:`1px solid ${C.border}`,minWidth:i===0?90:52}}>{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {(()=>{
+                    const mesIdx=MESES.indexOf(mes);
+                    const flujos=MESES.map((mn,i)=>{
+                      const pk2=`${mn}_${año}`;
+                      const pm=pres[pk2]||{};
+                      const ingresoP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+                      const egresoP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+                      const prog=programados.filter(p=>p.mes===i);
+                      const netoP=ingresoP-egresoP;
+                      const gm=gastos.filter(g=>g.mes===mn&&g.año===año);
+                      const ingresoR=gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0);
+                      const egresoR=gm.filter(g=>isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0);
+                      const netoR=gm.length>0?ingresoR-egresoR:null;
+                      return{netoP,netoR,prog,pasado:i<mesIdx,actual:i===mesIdx};
+                    });
+                    let acumP=0,acumR=0;
+                    const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
+                    const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
+                    return[
+                      <tr key="pres" style={{borderTop:`1px solid ${C.border}33`}}>
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Neto <span style={{background:C.blue+"22",color:C.blue,borderRadius:3,padding:"1px 4px"}}>P</span></td>
+                        {flujos.map((f,i)=>{
+                          const c=f.netoP<0?C.danger:f.netoP<2000?C.warning:C.accent;
+                          const pill=f.prog.length>0?` 📅`:"";
+                          const isCurrent=i===MESES.indexOf(mes);
+                          return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:c,fontWeight:600,whiteSpace:"nowrap",outline:isCurrent?`2px solid ${C.blue}44`:"none",borderRadius:3}}>{fmt(f.netoP)}{pill}</td>;
+                        })}
+                      </tr>,
+                      <tr key="real">
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Neto <span style={{background:C.accent+"22",color:C.accent,borderRadius:3,padding:"1px 4px"}}>R</span></td>
+                        {flujos.map((f,i)=>{
+                          if(f.netoR===null)return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.t3}}>—</td>;
+                          const c=f.netoR<0?C.danger:f.netoR<2000?C.warning:C.accent;
+                          const desv=f.netoR-f.netoP;
+                          return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:c,fontWeight:600,whiteSpace:"nowrap"}}>{fmt(f.netoR)} <span style={{fontSize:9,color:desv>=0?C.accent:C.danger}}>{desv>=0?"+":""}{fmt(desv)}</span></td>;
+                        })}
+                      </tr>,
+                      <tr key="div" style={{borderTop:`2px solid ${C.border}`}}><td colSpan={13}></td></tr>,
+                      <tr key="acump">
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acum. <span style={{background:C.blue+"22",color:C.blue,borderRadius:3,padding:"1px 4px"}}>P</span></td>
+                        {acumPA.map((a,i)=>{
+                          const c=a<0?C.danger:a<5000?C.warning:C.accent;
+                          const bg=a<0?C.danger+"22":a<5000?C.warning+"22":"transparent";
+                          return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:c,fontWeight:700,background:bg,borderRadius:3}}>{fmt(a)}</td>;
+                        })}
+                      </tr>,
+                      <tr key="acumr">
+                        <td style={{padding:"4px 7px",color:C.t2,fontSize:9,fontWeight:700}}>Acum. <span style={{background:C.accent+"22",color:C.accent,borderRadius:3,padding:"1px 4px"}}>R</span></td>
+                        {acumRA.map((a,i)=>{
+                          if(a===null)return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:C.t3}}>—</td>;
+                          const c=a<0?C.danger:a<5000?C.warning:C.accent;
+                          const bg=a<0?C.danger+"22":a<5000?C.warning+"22":"transparent";
+                          return<td key={i} style={{padding:"4px 7px",textAlign:"right",color:c,fontWeight:700,background:bg,borderRadius:3}}>{fmt(a)}</td>;
+                        })}
+                      </tr>
+                    ];
+                  })()}
+                </tbody>
+              </table>
+            </div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingLeft:6}}>{[{l:"P = Presupuestado",c:C.blue},{l:"R = Real",c:C.accent},{l:"📅 = Gasto programado",c:C.warning}].map((l,i)=><span key={i} style={{fontSize:9,color:l.c}}>{l.l}</span>)}</div>
+          </Card>}
+
         </div>}</div>}
 
         {tab==="registro"&&<div>
