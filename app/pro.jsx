@@ -320,7 +320,37 @@ export default function AppPro({ onLogout, onGoCalc }){
               {!hasRegToday&&<button onClick={markNoSpend} style={{background:C.card,borderRadius:10,padding:"10px 12px",border:`2px dashed ${C.accent}33`,color:C.accent,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left"}}>✅ Hoy no gasté nada</button>}
               {insights.slice(0,2).map((ins,i)=><div key={i} style={{background:C.card,borderRadius:8,padding:"6px 10px",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>{ins.icon}</span><span style={{fontSize:10,color:ins.color,flex:1}}>{ins.text}</span></div>)}
             </div></div>
-          {presVsReal.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>📊 Presupuesto vs Real</div>{presVsReal.map((c,i)=><Progress key={i} value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>)}</Card>}
+          {presVsReal.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>📊 Presupuesto vs Real</div>
+            {(()=>{
+              const totalPres=presVsReal.reduce((s,c)=>s+c.pres,0);
+              const totalReal=presVsReal.reduce((s,c)=>s+c.real,0);
+              const pct=totalPres>0?Math.min((totalReal/totalPres)*100,150):0;
+              const over=totalReal>totalPres&&totalPres>0;
+              const color=over?C.danger:pct>80?C.warning:C.accent;
+              const excedidas=presVsReal.filter(c=>c.over).length;
+              return<div style={{background:C.bg,borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
+                  <div>
+                    <div style={{fontSize:11,color:C.t3,marginBottom:2}}>Gasto total del mes</div>
+                    <div style={{fontSize:22,fontWeight:800,color}}>{fmt(totalReal)}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:C.t3,marginBottom:2}}>de {fmt(totalPres)} presupuestado</div>
+                    <div style={{fontSize:16,fontWeight:700,color}}>{Math.round(pct)}%</div>
+                  </div>
+                </div>
+                <div style={{height:8,background:C.border,borderRadius:4,overflow:"hidden",marginBottom:6}}>
+                  <div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:color,borderRadius:4,transition:"width 0.5s"}}/>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:10,color:over?C.danger:pct>80?C.warning:C.accent,fontWeight:600}}>
+                    {over?`⚠️ Excedido en ${fmt(totalReal-totalPres)}`:pct>80?`⚠️ Casi al límite — te quedan ${fmt(totalPres-totalReal)}`:`✅ Te quedan ${fmt(totalPres-totalReal)}`}
+                  </span>
+                  {excedidas>0&&<span style={{fontSize:10,color:C.danger}}>{excedidas} categoría{excedidas>1?"s":""} excedida{excedidas>1?"s":""}</span>}
+                </div>
+              </div>;
+            })()}
+            {presVsReal.map((c,i)=><Progress key={i} value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>)}</Card>}
           {pieData.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>¿A dónde se va tu dinero?</div><div style={{display:"flex",alignItems:"center",gap:12}}><ResponsiveContainer width="50%" height={130}><PieChart><Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={52} paddingAngle={2}>{pieData.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart></ResponsiveContainer><div style={{flex:1}}>{pieData.slice(0,5).map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><div style={{width:6,height:6,borderRadius:"50%",background:d.color,flexShrink:0}}/><span style={{fontSize:10,color:C.t2,flex:1}}>{d.name}</span><span style={{fontSize:10,fontWeight:600,color:C.t1}}>{fmt(d.value)}</span></div>)}</div></div></Card>}
           {trend.length>1&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>Tendencia {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={trend}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>fmt(v)}/><Area type="monotone" dataKey="ingresos" stroke={C.accent} fill={C.accent+"20"} strokeWidth={2} name="Ingresos"/><Area type="monotone" dataKey="egresos" stroke={C.danger} fill={C.danger+"20"} strokeWidth={2} name="Gastos"/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
           {projection.some(p=>p.hasPres)&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>🎯 Proyección {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={projection.filter(p=>p.hasPres)}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>v!=null?fmt(v):"—"}/><Area type="monotone" dataKey="proyectado" stroke={C.accent} fill={C.accent+"15"} strokeWidth={2} strokeDasharray="6 3" name="Plan"/><Area type="monotone" dataKey="real" stroke={C.cyan} fill={C.cyan+"20"} strokeWidth={3} name="Real" connectNulls/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
