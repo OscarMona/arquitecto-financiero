@@ -613,6 +613,41 @@ export default function AppPro({ onLogout, onGoCalc }){
 
         {tab==="presupuesto"&&<div>{!hasBudget?<Card style={{textAlign:"center",padding:30}}><p style={{color:C.t3}}>Aún no tienes presupuesto.</p><button onClick={()=>{setShowFirstBudget(true);setFbStep(0);setFbDraft({});}} style={{padding:"12px 24px",borderRadius:10,border:"none",background:C.accent,color:"#000",fontSize:14,fontWeight:700,cursor:"pointer",marginTop:8}}>Configurar presupuesto</button></Card>:<div>
           <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:4}}>Presupuesto {mes} {año}</div><p style={{fontSize:11,color:C.t3,margin:"0 0 12px"}}>Cambia un monto y aplica de este mes en adelante</p>
+          {(()=>{
+            const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const balance=ingPres-egrPres;
+            const deficit=balance<0;
+            const ajustado=balance>=0&&balance<ingPres*0.1;
+            const color=deficit?C.danger:ajustado?C.warning:C.accent;
+            const bgColor=deficit?C.danger+"15":ajustado?C.warning+"15":C.accent+"10";
+            const borderColor=deficit?C.danger+"44":ajustado?C.warning+"44":C.accent+"33";
+            const emoji=deficit?"🔴":ajustado?"🟡":"🟢";
+            const mensaje=deficit
+              ?`Déficit de ${fmt(Math.abs(balance))} — gastas más de lo que ganas`
+              :ajustado
+              ?`Margen ajustado — solo te queda el ${Math.round((balance/ingPres)*100)}% de tus ingresos`
+              :`Presupuesto sano — te sobran ${fmt(balance)} al mes`;
+            return ingPres>0?<div style={{background:bgColor,border:`1px solid ${borderColor}`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+                <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💰 Ingresos</div>
+                  <div style={{fontSize:13,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💸 Egresos</div>
+                  <div style={{fontSize:13,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>{deficit?"⚠️ Déficit":"✅ Sobrante"}</div>
+                  <div style={{fontSize:13,fontWeight:800,color}}>{fmt(Math.abs(balance))}</div>
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color,fontWeight:600}}>
+                <span>{emoji}</span><span>{mensaje}</span>
+              </div>
+            </div>:null;
+          })()}
           {CATEGORIAS.map(cat=>{
             const subs=allSubsFor(cat.key,presMes);
             const subsConExtras=[...subs,...Object.keys(presMes).filter(k=>k.startsWith(`${cat.key}__`)&&!subs.find(s=>s.key===k)).map(k=>({key:k,name:k.split("__")[1],isExtra:true}))];
