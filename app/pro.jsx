@@ -320,6 +320,44 @@ export default function AppPro({ onLogout, onGoCalc }){
               {!hasRegToday&&<button onClick={markNoSpend} style={{background:C.card,borderRadius:10,padding:"10px 12px",border:`2px dashed ${C.accent}33`,color:C.accent,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left"}}>✅ Hoy no gasté nada</button>}
               {insights.slice(0,2).map((ins,i)=><div key={i} style={{background:C.card,borderRadius:8,padding:"6px 10px",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:14}}>{ins.icon}</span><span style={{fontSize:10,color:ins.color,flex:1}}>{ins.text}</span></div>)}
             </div></div>
+          {hasBudget&&(()=>{
+            const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const balance=ingPres-egrPres;
+            const deficit=balance<0;
+            const ajustado=balance>=0&&balance<ingPres*0.1;
+            const color=deficit?C.danger:ajustado?C.warning:C.accent;
+            const bgColor=deficit?C.danger+"15":ajustado?C.warning+"15":C.accent+"10";
+            const borderColor=deficit?C.danger+"44":ajustado?C.warning+"44":C.accent+"33";
+            const emoji=deficit?"🔴":ajustado?"🟡":"🟢";
+            const mensaje=deficit
+              ?`Tu presupuesto tiene un déficit de ${fmt(Math.abs(balance))} — gastas más de lo que ganas`
+              :ajustado
+              ?`Tu margen es muy ajustado — solo te queda el ${Math.round((balance/ingPres)*100)}% de tus ingresos`
+              :`Tu presupuesto está sano — te sobran ${fmt(balance)} al mes`;
+            return ingPres>0?<Card style={{marginBottom:12,background:bgColor,border:`1px solid ${borderColor}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <span style={{fontSize:13,fontWeight:700,color:C.t1}}>📋 Tu presupuesto de {mes}</span>
+                <span style={{fontSize:18}}>{emoji}</span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💰 Ingresos</div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💸 Egresos</div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>{deficit?"⚠️ Déficit":"✅ Sobrante"}</div>
+                  <div style={{fontSize:14,fontWeight:800,color}}>{fmt(Math.abs(balance))}</div>
+                </div>
+              </div>
+              <div style={{fontSize:11,color,fontWeight:600,textAlign:"center",padding:"6px 8px",background:C.bg,borderRadius:8}}>{mensaje}</div>
+            </Card>:null;
+          })()}
+
           {presVsReal.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>📊 Presupuesto vs Real</div>
             {(()=>{
               const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
