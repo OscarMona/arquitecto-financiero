@@ -5,7 +5,7 @@ import LoginScreen from "./login";
 import AppPro from "./pro";
 import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../lib/db";
+import { db } from "../lib/firebase";
 
 export default function Home() {
   const { user, loading, logout } = useAuth();
