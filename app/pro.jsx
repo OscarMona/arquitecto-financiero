@@ -535,7 +535,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                       const netoR=gm.length>0?ingresoR-egresoR-pagoTarjeta:null;
                       return{netoP,netoR,prog,pagoTarjeta,pasado:i<mesIdx,actual:i===mesIdx};
                     });
-                    let acumP=saldoInicial-deudaTarjetaInicial,acumR=saldoInicial-deudaTarjetaInicial;
+                    let acumP=saldoInicial,acumR=saldoInicial;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
                     const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
                     return[
