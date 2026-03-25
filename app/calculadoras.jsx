@@ -1620,10 +1620,10 @@ export default function Landing({ onGoPro }) {
               ¿Quieres tomar el control total de tus finanzas?
             </h3>
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $4.99 USD/mes.
+              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro y alertas inteligentes para tomar el control total de tu dinero.
             </p>
             <button onClick={onGoPro} style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              🚀 Comenzar ahora
+              🚀 Obtén tu suscripción mensual
             </button>
           </div>
         </div>
