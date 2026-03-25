@@ -43,7 +43,7 @@ function SuccessContent() {
               <div key={i} style={{ fontSize: 13, color: C.t1, padding: "6px 0", borderBottom: i < 3 ? `1px solid ${C.border}33` : "none" }}>{s}</div>
             ))}
           </div>
-          <a href="/login" style={{ display: "block", width: "100%", maxWidth: 360, padding: "16px", borderRadius: 12, background: C.accent, color: "#000", fontSize: 16, fontWeight: 800, textDecoration: "none", textAlign: "center", marginBottom: 12 }}>
+          <a href="/" style={{ display: "block", width: "100%", maxWidth: 360, padding: "16px", borderRadius: 12, background: C.accent, color: "#000", fontSize: 16, fontWeight: 800, textDecoration: "none", textAlign: "center", marginBottom: 12 }}>
             Ya tengo mi contraseña — Entrar →
           </a>
           <div style={{ fontSize: 11, color: C.t3 }}>¿No llegó el correo? Revisa tu carpeta de spam.</div>

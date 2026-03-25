@@ -15,6 +15,24 @@ if (!getApps().length) {
   });
 }
 
+async function sendPasswordResetEmail(email) {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestType: "PASSWORD_RESET",
+        email,
+      }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || "Error enviando email");
+  return data;
+}
+
 export async function POST(req) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -53,9 +71,8 @@ export async function POST(req) {
         suscripcionInicio: new Date().toISOString(),
       }, { merge: true });
 
-      await authAdmin.generatePasswordResetLink(email, {
-        url: process.env.NEXT_PUBLIC_URL + "/login",
-      });
+      // Mandar email de restablecimiento de contraseña via Firebase REST API
+      await sendPasswordResetEmail(email);
 
     } catch (err) {
       console.error("Error procesando webhook:", err);
