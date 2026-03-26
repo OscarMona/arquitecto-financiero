@@ -523,10 +523,9 @@ export default function AppPro({ onLogout, onGoCalc }){
                       acc[mesPago]=(acc[mesPago]||0)+Math.abs(g.monto);
                       return acc;
                     },{});
-                    // Deuda inicial cae en el próximo día de pago
-                    if(deudaTarjetaInicial>0){
+                    // Deuda inicial cae en el próximo día de pago — solo en el año actual
+                    if(deudaTarjetaInicial>0&&añoFlujo===año){
                       const hoy=new Date().getDate();
-                      // Si ya pasó el día de pago este mes, cae el mes siguiente
                       const mesPagoDeuda=diaPago>0&&hoy<=diaPago?mesIdx:(mesIdx+1)%12;
                       pagoTarjetaPorMes[mesPagoDeuda]=(pagoTarjetaPorMes[mesPagoDeuda]||0)+deudaTarjetaInicial;
                     }
