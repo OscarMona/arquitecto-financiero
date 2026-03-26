@@ -495,7 +495,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,paddingLeft:6}}>
               <div style={{fontSize:13,fontWeight:700,color:C.t1}}>💸 Flujo de caja</div>
               <div style={{display:"flex",alignItems:"center",gap:4}}>
-                {[año-1,año,año+1].map(a=>(
+                {[año,año+1].map(a=>(
                   <button key={a} onClick={()=>setAño(a)} style={{padding:"3px 10px",borderRadius:6,border:`1px solid ${a===año?C.accent:C.border}`,background:a===año?C.accent+"15":"transparent",color:a===año?C.accent:C.t3,fontSize:11,fontWeight:a===año?700:400,cursor:"pointer"}}>{a}</button>
                 ))}
               </div>
@@ -543,7 +543,10 @@ export default function AppPro({ onLogout, onGoCalc }){
                       const netoR=gm.length>0?ingresoR-egresoR-pagoTarjeta:null;
                       return{netoP,netoR,prog,pagoTarjeta,pasado:i<mesIdx,actual:i===mesIdx};
                     });
-                    let acumP=saldoInicial,acumR=saldoInicial;
+                    // Si es año siguiente, el acumulado arranca desde el final del año anterior
+                    const acumBaseP=año>new Date().getFullYear()?MESES.reduce((s,mn)=>{const pk2=`${mn}_${año-1}`;const pm=pres[pk2]||{};const iP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const eP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);return s+(iP-eP);},saldoInicial):saldoInicial;
+                    const acumBaseR=año>new Date().getFullYear()?MESES.reduce((s,mn)=>{const gm=gastos.filter(g=>g.mes===mn&&g.año===año-1);if(!gm.length)return s;const iR=gm.filter(g=>g.cat==="Ingresos").reduce((t,g)=>t+g.monto,0);const eR=gm.filter(g=>isGasto(g.cat)).reduce((t,g)=>t+Math.abs(g.monto),0);return s+(iR-eR);},saldoInicial):saldoInicial;
+                    let acumP=acumBaseP,acumR=acumBaseR;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
                     const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
                     return[
