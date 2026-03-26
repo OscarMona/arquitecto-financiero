@@ -800,6 +800,21 @@ export default function AppPro({ onLogout, onGoCalc }){
                       // Calcular meses hasta el mismo mes del año siguiente
                       const mesTarget=p.mes;
                       const mesesHasta=mesTarget>=mesIdx?(12-mesIdx+mesTarget):12+(mesTarget-mesIdx);
+
+                      // Registrar como gasto puntual en el mismo mes del año siguiente
+                      const periodoSiguienteAño=ALL_PERIODS.find(pp=>pp.mes===MESES[p.mes]&&pp.año===año+1);
+                      if(periodoSiguienteAño){
+                        setPres(prev=>{
+                          const up={...prev};
+                          const ex={...(up[periodoSiguienteAño.key]||{})};
+                          const itemKey=`Gastos_Fijos__${p.nombre}`;
+                          ex[itemKey]=(parseFloat(ex[itemKey])||0)+p.monto;
+                          ex["Gastos_Fijos"]=(parseFloat(ex["Gastos_Fijos"])||0)+p.monto;
+                          up[periodoSiguienteAño.key]=ex;
+                          return up;
+                        });
+                      }
+
                       if(mesesHasta>0&&p.repite){
                         // Prorratear para el siguiente año
                         const porMes=Math.ceil(p.monto/mesesHasta);
@@ -818,10 +833,10 @@ export default function AppPro({ onLogout, onGoCalc }){
                             }
                             return up;
                           });
-                          showToast(`✅ Pagado. Prorateando ${fmt(porMes)}/mes para el ${año+1}`);
+                          showToast(`✅ Pagado. Aparecerá en ${MESES[p.mes]} ${año+1} y prorateando ${fmt(porMes)}/mes`);
                         }
                       } else {
-                        showToast(`✅ Marcado como pagado en ${año}`);
+                        showToast(`✅ Marcado como pagado. Aparecerá en ${MESES[p.mes]} ${año+1}`);
                       }
                     }} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"none",background:C.accent+"15",color:C.accent,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"left"}}>
                       ✅ Ya lo pagué — prepararme para {año+1}
