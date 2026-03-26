@@ -813,33 +813,10 @@ export default function AppPro({ onLogout, onGoCalc }){
                           return up;
                         });
                       }
-
-                      if(mesesHasta>0&&p.repite){
-                        // Prorratear para el siguiente año
-                        const porMes=Math.ceil(p.monto/mesesHasta);
-                        const ci=ALL_PERIODS.findIndex(pp=>pp.mes===mes&&pp.año===año);
-                        if(ci>=0){
-                          setPres(prev=>{
-                            const up={...prev};
-                            for(let i=0;i<mesesHasta;i++){
-                              const period=ALL_PERIODS[ci+i];
-                              if(!period)break;
-                              const ex={...(up[period.key]||{})};
-                              const itemKey=`Ahorro__Próximo ${p.nombre}`;
-                              ex[itemKey]=(parseFloat(ex[itemKey])||0)+porMes;
-                              ex["Ahorro"]=(parseFloat(ex["Ahorro"])||0)+porMes;
-                              up[period.key]=ex;
-                            }
-                            return up;
-                          });
-                          showToast(`✅ Pagado. Aparecerá en ${MESES[p.mes]} ${año+1} y prorateando ${fmt(porMes)}/mes`);
-                        }
-                      } else {
-                        showToast(`✅ Marcado como pagado. Aparecerá en ${MESES[p.mes]} ${año+1}`);
-                      }
-                    }} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"none",background:C.accent+"15",color:C.accent,fontSize:11,fontWeight:700,cursor:"pointer",textAlign:"left"}}>
-                      ✅ Ya lo pagué — prepararme para {año+1}
-                    </button>
+                        showToast(`📌 Registrado como pago puntual en ${MESES[p.mes]} ${año+1}`);
+                      }} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:C.card,color:C.t2,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left"}}>
+                        📌 Pago puntual — solo registrarlo en {MESES[p.mes]} {año+1}
+                      </button>
                   </div>}
                 </div>
               );
