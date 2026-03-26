@@ -33,6 +33,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [metas,setMetas]=useState([]);
   const [mes,setMes]=useState(()=>MESES[new Date().getMonth()]);
   const [año,setAño]=useState(()=>new Date().getFullYear());
+  const [añoFlujo,setAñoFlujo]=useState(()=>new Date().getFullYear());
   const [qMonto,setQMonto]=useState("");
   const [qNota,setQNota]=useState("");
   const [qTipo,setQTipo]=useState("gasto");
@@ -496,7 +497,7 @@ export default function AppPro({ onLogout, onGoCalc }){
               <div style={{fontSize:13,fontWeight:700,color:C.t1}}>💸 Flujo de caja</div>
               <div style={{display:"flex",alignItems:"center",gap:4}}>
                 {[año,año+1].map(a=>(
-                  <button key={a} onClick={()=>setAño(a)} style={{padding:"3px 10px",borderRadius:6,border:`1px solid ${a===año?C.accent:C.border}`,background:a===año?C.accent+"15":"transparent",color:a===año?C.accent:C.t3,fontSize:11,fontWeight:a===año?700:400,cursor:"pointer"}}>{a}</button>
+                  <button key={a} onClick={()=>setAñoFlujo(a)} style={{padding:"3px 10px",borderRadius:6,border:`1px solid ${a===añoFlujo?C.accent:C.border}`,background:a===añoFlujo?C.accent+"15":"transparent",color:a===añoFlujo?C.accent:C.t3,fontSize:11,fontWeight:a===añoFlujo?700:400,cursor:"pointer"}}>{a}</button>
                 ))}
               </div>
             </div>
@@ -530,13 +531,13 @@ export default function AppPro({ onLogout, onGoCalc }){
                       pagoTarjetaPorMes[mesPagoDeuda]=(pagoTarjetaPorMes[mesPagoDeuda]||0)+deudaTarjetaInicial;
                     }
                     const flujos=MESES.map((mn,i)=>{
-                      const pk2=`${mn}_${año}`;
+                      const pk2=`${mn}_${añoFlujo}`;
                       const pm=pres[pk2]||{};
                       const ingresoP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
                       const egresoP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
                       const prog=programados.filter(p=>p.mes===i);
                       const netoP=ingresoP-egresoP;
-                      const gm=gastos.filter(g=>g.mes===mn&&g.año===año);
+                      const gm=gastos.filter(g=>g.mes===mn&&g.año===añoFlujo);
                       const ingresoR=gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0);
                       const egresoR=gm.filter(g=>isGasto(g.cat)&&g.sub!=="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0);
                       const pagoTarjeta=pagoTarjetaPorMes[i]||0;
@@ -544,8 +545,8 @@ export default function AppPro({ onLogout, onGoCalc }){
                       return{netoP,netoR,prog,pagoTarjeta,pasado:i<mesIdx,actual:i===mesIdx};
                     });
                     // Si es año siguiente, el acumulado arranca desde el final del año anterior
-                    const acumBaseP=año>new Date().getFullYear()?MESES.reduce((s,mn)=>{const pk2=`${mn}_${año-1}`;const pm=pres[pk2]||{};const iP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const eP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);return s+(iP-eP);},saldoInicial):saldoInicial;
-                    const acumBaseR=año>new Date().getFullYear()?MESES.reduce((s,mn)=>{const gm=gastos.filter(g=>g.mes===mn&&g.año===año-1);if(!gm.length)return s;const iR=gm.filter(g=>g.cat==="Ingresos").reduce((t,g)=>t+g.monto,0);const eR=gm.filter(g=>isGasto(g.cat)).reduce((t,g)=>t+Math.abs(g.monto),0);return s+(iR-eR);},saldoInicial):saldoInicial;
+                    const acumBaseP=añoFlujo>new Date().getFullYear()?MESES.reduce((s,mn)=>{const pk2=`${mn}_${añoFlujo-1}`;const pm=pres[pk2]||{};const iP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const eP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);return s+(iP-eP);},saldoInicial):saldoInicial;
+                    const acumBaseR=añoFlujo>new Date().getFullYear()?MESES.reduce((s,mn)=>{const gm=gastos.filter(g=>g.mes===mn&&g.año===añoFlujo-1);if(!gm.length)return s;const iR=gm.filter(g=>g.cat==="Ingresos").reduce((t,g)=>t+g.monto,0);const eR=gm.filter(g=>isGasto(g.cat)).reduce((t,g)=>t+Math.abs(g.monto),0);return s+(iR-eR);},saldoInicial):saldoInicial;
                     let acumP=acumBaseP,acumR=acumBaseR;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
                     const acumRA=flujos.map(f=>{if(f.netoR!==null){acumR+=f.netoR;return acumR;}return null;});
