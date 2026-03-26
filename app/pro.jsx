@@ -290,7 +290,20 @@ export default function AppPro({ onLogout, onGoCalc }){
         </div>}
 
         {fbStep===2&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📅</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Pagos grandes que se vienen?</h2><p style={{color:C.t2,fontSize:12}}>Anualidad, seguro, predial... Si no tienes, sáltalo.</p></div>
-          {programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:C.card,borderRadius:10,marginBottom:6,border:`1px solid ${C.border}`}}><span style={{fontSize:16}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:13,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}
+          {programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:C.card,borderRadius:10,marginBottom:6,border:`1px solid ${C.border}`}}><span style={{fontSize:16}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:13,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>{
+                  setProgramados(prev=>prev.filter(x=>x.id!==p.id));
+                  setPres(prev=>{
+                    const up={...prev};
+                    Object.keys(up).forEach(pk=>{
+                      if(up[pk]){
+                        const ex={...up[pk]};
+                        Object.keys(ex).forEach(k=>{if(k.includes(p.nombre))delete ex[k];});
+                        up[pk]=ex;
+                      }
+                    });
+                    return up;
+                  });
+                }} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}
           <ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>
           <div style={{display:"flex",gap:8,marginTop:16}}><button onClick={()=>setFbStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>{saveBudgetPermanent(fbDraft);setShowFirstBudget(false);setTab("resumen");showToast("🎉 ¡Tu presupuesto está listo!");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>✅ Guardar presupuesto</button></div>
         </div>}
@@ -309,7 +322,7 @@ export default function AppPro({ onLogout, onGoCalc }){
 
       <div style={{margin:"0 16px 8px",padding:"8px 12px",background:C.warning+"12",borderRadius:8,border:`1px solid ${C.warning}33`,textAlign:"center"}}><span style={{fontSize:11,color:C.warning}}>🚧 Estamos en construcción — tu feedback nos ayuda a mejorar</span></div>
 
-      <div style={{padding:"14px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,color:C.t3}}>Hola, {nombre} 👋</div>{tab!=="presupuesto"&&<div style={{fontSize:15,fontWeight:700}}>{mes} {año}</div>}{tab!=="presupuesto"&&<div style={{fontSize:9,color:C.accent,fontWeight:600,marginTop:1}}>📊 Movimientos reales del mes</div>}</div><div style={{display:"flex",gap:6}}><button onClick={()=>{const i=MESES.indexOf(mes);if(i===0){setMes(MESES[11]);setAño(año-1);}else setMes(MESES[i-1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>←</button><button onClick={()=>{const i=MESES.indexOf(mes);if(i===11){setMes(MESES[0]);setAño(año+1);}else setMes(MESES[i+1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>→</button></div></div>
+      <div style={{padding:"14px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,color:C.t3}}>Hola, {nombre} 👋</div>{tab!=="presupuesto"&&<div style={{fontSize:15,fontWeight:700}}>{mes} {año}</div>}{tab!=="presupuesto"&&<div style={{fontSize:9,color:C.accent,fontWeight:600,marginTop:1}}>📊 Movimientos reales del mes</div>}</div><div style={{display:"flex",gap:6}}><button onClick={()=>{const i=MESES.indexOf(mes);if(i===0){if(año>2026){setMes(MESES[11]);setAño(año-1);}}else setMes(MESES[i-1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>←</button><button onClick={()=>{const i=MESES.indexOf(mes);if(i===11){if(año<2027){setMes(MESES[0]);setAño(año+1);}}else setMes(MESES[i+1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>→</button></div></div>
 
       {(tab==="resumen"||tab==="registro")&&<div style={{display:"grid",gridTemplateColumns:tarjetaMes>0?"1fr 1fr 1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,padding:"0 16px 4px"}}>{[{l:"Ingresos",v:ingMes,c:C.accent},{l:"Efectivo",v:efectivoMes,c:C.danger},tarjetaMes>0?{l:"💳 Tarjeta",v:tarjetaMes,c:C.purple}:null,{l:"Apartado",v:ahoMes,c:C.cyan},{l:"Disponible",v:balMes,c:balMes>=0?C.accent:C.danger}].filter(Boolean).map((s,i)=><div key={i} style={{background:C.card,borderRadius:10,padding:"8px 4px",textAlign:"center"}}><div style={{fontSize:8,color:C.t3}}>{s.l}</div><div style={{fontSize:12,fontWeight:700,color:s.c}}>{fmt(s.v)}</div></div>)}</div>}
       {(tab==="resumen"||tab==="registro")&&(tarjetaMes>0||deudaTarjetaInicial>0)&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{deudaTarjetaInicial>0&&<span style={{fontSize:10,color:C.t3}}> · Deuda anterior: {fmt(deudaTarjetaInicial)}</span>}{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>{tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Tu saldo disponible muestra {fmt(balMes)}, pero necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu tarjeta cuando llegue el corte. Tu disponible real es <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}{deudaTarjetaInicial>0&&<div style={{fontSize:11,color:C.t3,paddingLeft:24,marginTop:4}}>Deuda total incluyendo anterior: <strong style={{color:C.purple}}>{fmt(tarjetaMes+deudaTarjetaInicial-pagosTarjetaMes)}</strong></div>}</div>}
@@ -496,7 +509,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,paddingLeft:6}}>
               <div style={{fontSize:13,fontWeight:700,color:C.t1}}>💸 Flujo de caja</div>
               <div style={{display:"flex",alignItems:"center",gap:4}}>
-                {[año,año+1].map(a=>(
+                {[new Date().getFullYear(),new Date().getFullYear()+1].map(a=>(
                   <button key={a} onClick={()=>setAñoFlujo(a)} style={{padding:"3px 10px",borderRadius:6,border:`1px solid ${a===añoFlujo?C.accent:C.border}`,background:a===añoFlujo?C.accent+"15":"transparent",color:a===añoFlujo?C.accent:C.t3,fontSize:11,fontWeight:a===añoFlujo?700:400,cursor:"pointer"}}>{a}</button>
                 ))}
               </div>
@@ -790,7 +803,20 @@ export default function AppPro({ onLogout, onGoCalc }){
                       <div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}{pagadoEsteAño?` · Pagado ${año} ✓`:""}</div>
                     </div>
                     <span style={{fontSize:12,fontWeight:700,color:pagadoEsteAño?C.t3:C.warning}}>{fmt(p.monto)}</span>
-                    <button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:12}}>✕</button>
+                    <button onClick={()=>{
+                    setProgramados(prev=>prev.filter(x=>x.id!==p.id));
+                    setPres(prev=>{
+                      const up={...prev};
+                      Object.keys(up).forEach(pk=>{
+                        if(up[pk]){
+                          const ex={...up[pk]};
+                          Object.keys(ex).forEach(k=>{if(k.includes(p.nombre))delete ex[k];});
+                          up[pk]=ex;
+                        }
+                      });
+                      return up;
+                    });
+                  }} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:12}}>✕</button>
                   </div>
                   {!pagadoEsteAño&&(yaPaso||p.mes===mesIdx)&&<div style={{padding:"0 12px 10px"}}>
                     <button onClick={()=>{
