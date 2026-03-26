@@ -492,7 +492,14 @@ export default function AppPro({ onLogout, onGoCalc }){
 
           {/* FLUJO DE CAJA 12 MESES */}
           {hasBudget&&<Card style={{marginBottom:12,padding:"14px 10px"}}>
-            <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:12,paddingLeft:6}}>💸 Flujo de caja {año}</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,paddingLeft:6}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.t1}}>💸 Flujo de caja</div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}>
+                {[año-1,año,año+1].map(a=>(
+                  <button key={a} onClick={()=>setAño(a)} style={{padding:"3px 10px",borderRadius:6,border:`1px solid ${a===año?C.accent:C.border}`,background:a===año?C.accent+"15":"transparent",color:a===año?C.accent:C.t3,fontSize:11,fontWeight:a===año?700:400,cursor:"pointer"}}>{a}</button>
+                ))}
+              </div>
+            </div>
             <div style={{overflowX:"auto"}}>
               <table style={{borderCollapse:"collapse",minWidth:680,width:"100%",fontSize:10}}>
                 <thead>
