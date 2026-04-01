@@ -13,6 +13,18 @@ export default function Home() {
   const [showCalc, setShowCalc] = useState(false);
   const [suscripcionActiva, setSuscripcionActiva] = useState<boolean | null>(null);
   const [checkingSub, setCheckingSub] = useState(false);
+  const [precio, setPrecio] = useState("$4.99 USD/mes");
+
+  useEffect(() => {
+    fetch("https://ipapi.co/json/")
+      .then(r => r.json())
+      .then(data => {
+        if (data.country_code === "MX") setPrecio("$89 MXN/mes");
+        else if (data.country_code === "US") setPrecio("$7.99 USD/mes");
+        else setPrecio("$4.99 USD/mes");
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) { setSuscripcionActiva(null); return; }
@@ -60,7 +72,7 @@ export default function Home() {
             Tu cuenta existe pero no tiene una suscripción activa. Por menos que un café al mes toma control total de tus finanzas.
           </p>
           <a href="/suscribete" style={{ display: "block", padding: "14px 28px", borderRadius: 12, background: C.accent, color: "#000", fontSize: 15, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
-            Activar por $4.99 USD/mes →
+            Activar por {precio} →
           </a>
           <button onClick={async () => { await logout(); }} style={{ background: "none", border: "none", color: C.t2, fontSize: 12, cursor: "pointer" }}>
             Cerrar sesión
