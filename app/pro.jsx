@@ -48,6 +48,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [editandoConfig,setEditandoConfig]=useState(false);
   const [inversiones,setInversiones]=useState([]);
   const [showInvModal,setShowInvModal]=useState(false);
+  const [showRetiroModal,setShowRetiroModal]=useState(false);
   const [invModalData,setInvModalData]=useState({monto:0,mes:"",año:0});
   const [invInstrumento,setInvInstrumento]=useState("");
   const [invTasa,setInvTasa]=useState("");
@@ -111,8 +112,8 @@ export default function AppPro({ onLogout, onGoCalc }){
 
   const applyForward=(itemKey,newValue)=>{const num=parseFloat(newValue)||0;const ci=ALL_PERIODS.findIndex(p=>p.mes===mes&&p.año===año);if(ci<0)return;setPres(prev=>{const up={...prev};for(let i=ci;i<ALL_PERIODS.length;i++){const period=ALL_PERIODS[i];const ex={...(up[period.key]||{})};if(num>0)ex[itemKey]=num;else delete ex[itemKey];const cat=itemKey.split("__")[0];const ct=Object.entries(ex).filter(([k])=>k.startsWith(`${cat}__`)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);if(ct>0)ex[cat]=ct;else delete ex[cat];up[period.key]=ex;}return up;});showToast("✅ Actualizado de este mes en adelante");};
 
-  const addMov=(cat,sub,monto,desc="",metodo="efectivo")=>{const isIng=cat==="Ingresos";const isPagoTarjeta=sub==="Pago de tarjeta";const d=new Date();const mi=MESES.indexOf(mes);const fecha=`${año}-${String(mi+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const g={id:Date.now()+Math.floor(Math.random()*10000),fecha,mes,año,cat,sub,monto:isIng?Math.abs(+monto):isPagoTarjeta?-Math.abs(+monto):-Math.abs(+monto),desc,metodo:isIng?"efectivo":isPagoTarjeta?"pago_tarjeta":metodo};setGastos(prev=>[...prev,g]);return g;};
-  const delMov=id=>setGastos(prev=>prev.filter(g=>g.id!==id));
+  const addMov=(cat,sub,monto,desc="",metodo="efectivo",extraId=null)=>{const isIng=cat==="Ingresos";const isPagoTarjeta=sub==="Pago de tarjeta";const d=new Date();const mi=MESES.indexOf(mes);const fecha=`${año}-${String(mi+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const id=extraId||(Date.now()+Math.floor(Math.random()*10000));const g={id,fecha,mes,año,cat,sub,monto:isIng?Math.abs(+monto):isPagoTarjeta?-Math.abs(+monto):-Math.abs(+monto),desc,metodo:isIng?"efectivo":isPagoTarjeta?"pago_tarjeta":metodo};setGastos(prev=>[...prev,g]);return g;};
+  const delMov=id=>{setGastos(prev=>prev.filter(g=>g.id!==id));setInversiones(prev=>prev.filter(i=>i.id!==id));};
   const editMov=(id,nc,ns,nm,nn,met)=>{setGastos(prev=>prev.map(g=>{if(g.id!==id)return g;const isIng=nc==="Ingresos";return{...g,cat:nc,sub:ns,monto:isIng?Math.abs(+nm):-Math.abs(+nm),desc:nn,metodo:met||g.metodo||"efectivo"};}));setEditingMov(null);showToast("✅ Movimiento actualizado");};
 
   const handleAiEntry=async()=>{if(!aiText.trim())return;setAiLoading(true);try{const cl=QUICK_ITEMS.map(q=>`${q.cat}|${q.sub}:${q.label}`).join(",");const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:`Analiza texto y extrae movimientos. Responde SOLO JSON:[{"cat":"","sub":"","monto":0,"nota":"","tipo":"ingreso|gasto|ahorro","metodo":"efectivo|tarjeta"}]. Si mencionan tarjeta usa metodo tarjeta, si no, usa efectivo. Categorías:${cl}. Texto:"${aiText}"`}]})});const d=await r.json();setAiResults(JSON.parse((d.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim()));}catch(e){showToast("Error");}setAiLoading(false);};
@@ -326,6 +327,38 @@ export default function AppPro({ onLogout, onGoCalc }){
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}} input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none} input[type=number]{-moz-appearance:textfield}`}</style>
       {toast&&<div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:C.accent,color:"#000",padding:"10px 20px",borderRadius:10,fontSize:13,fontWeight:600,zIndex:9999,animation:"fadeIn 0.3s"}}>{toast}</div>}
 
+      {/* MODAL RETIRO */}
+      {showRetiroModal&&<div style={{position:"fixed",inset:0,background:"#000a",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        <div style={{background:C.card,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,border:`1px solid ${C.cyan}33`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:4}}>💰 Retirar inversión</div>
+          <div style={{fontSize:11,color:C.t3,marginBottom:16}}>Selecciona cuál inversión retiras — el dinero vuelve a tu liquidez</div>
+          <div style={{marginBottom:16}}>
+            {inversiones.map((inv,i)=>{
+              const hoy=new Date();
+              const meses=Math.max(0,(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes)));
+              const valorActual=inv.monto*Math.pow(1+(inv.tasa/100)/12,meses);
+              return <button key={i} onClick={()=>{
+                addMov("Ingresos","Retiro de inversión",valorActual,`Retiro de ${inv.instrumento}`,"efectivo");
+                setInversiones(prev=>prev.filter((_,j)=>j!==i));
+                setGastos(prev=>prev.filter(g=>g.id!==inv.id));
+                showToast(`✅ Retiro de ${inv.instrumento}: ${fmt(valorActual)}`);
+                setShowRetiroModal(false);
+              }} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg,cursor:"pointer",marginBottom:8,textAlign:"left"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.t1}}>{inv.instrumento}</div>
+                  <div style={{fontSize:10,color:C.t3}}>{inv.mes} {inv.año} · {inv.tasa}% anual</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:C.accent}}>{fmt(valorActual)}</div>
+                  <div style={{fontSize:9,color:C.t3}}>valor actual</div>
+                </div>
+              </button>;
+            })}
+          </div>
+          <button onClick={()=>setShowRetiroModal(false)} style={{width:"100%",padding:12,borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:13,cursor:"pointer"}}>Cancelar</button>
+        </div>
+      </div>}
+
       {/* MODAL INVERSIÓN */}
       {showInvModal&&<div style={{position:"fixed",inset:0,background:"#000a",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
         <div style={{background:C.card,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,border:`1px solid ${C.accent}33`}}>
@@ -345,7 +378,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             <button onClick={()=>{setShowInvModal(false);setInvInstrumento("");setInvTasa("");}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:13,cursor:"pointer"}}>Omitir</button>
             <button onClick={()=>{
               if(invInstrumento&&invTasa){
-                setInversiones(prev=>[...prev,{monto:invModalData.monto,mes:invModalData.mes,año:invModalData.año,instrumento:invInstrumento,tasa:parseFloat(invTasa)}]);
+                setInversiones(prev=>[...prev,{id:invModalData.movId,monto:invModalData.monto,mes:invModalData.mes,año:invModalData.año,instrumento:invInstrumento,tasa:parseFloat(invTasa)}]);
                 showToast(`✅ Inversión en ${invInstrumento} registrada al ${invTasa}%`);
               }
               setShowInvModal(false);setInvInstrumento("");setInvTasa("");
@@ -657,8 +690,9 @@ export default function AppPro({ onLogout, onGoCalc }){
             <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:14,border:`1px solid ${C.border}`}}><input type="number" value={qMonto} onChange={e=>setQMonto(e.target.value)} placeholder="$0" style={{background:"transparent",border:"none",color:C.t1,fontSize:36,fontWeight:800,textAlign:"center",outline:"none",width:"100%",fontFamily:"'Space Grotesk',monospace"}}/><input type="text" value={qNota} onChange={e=>setQNota(e.target.value)} placeholder="Nota (opcional)" style={{background:"transparent",border:"none",color:C.t3,fontSize:12,textAlign:"center",outline:"none",width:"100%",marginTop:4}}/></div>
             <div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"gasto",l:"💸 Gasto",c:C.danger},{id:"ingreso",l:"💰 Ingreso",c:C.accent},{id:"ahorro",l:"🐷 Ahorro",c:C.cyan}].map(t=><button key={t.id} onClick={()=>setQTipo(t.id)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${qTipo===t.id?t.c:C.border}`,background:qTipo===t.id?t.c+"15":"transparent",color:qTipo===t.id?t.c:C.t3,fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>)}</div>
             {qTipo==="gasto"&&<div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"efectivo",l:"💵 Efectivo/Débito",c:C.accent},{id:"tarjeta",l:"💳 Tarjeta crédito",c:C.purple}].map(m=><button key={m.id} onClick={()=>setQMetodo(m.id)} style={{flex:1,padding:6,borderRadius:8,border:`2px solid ${qMetodo===m.id?m.c:C.border}`,background:qMetodo===m.id?m.c+"15":"transparent",color:qMetodo===m.id?m.c:C.t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{m.l}</button>)}</div>}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);if(q.tipo==="ahorro"&&q.sub==="Inversión"){setInvModalData({monto:parseFloat(qMonto),mes,año});setShowInvModal(true);}setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){if(q.tipo==="ahorro"&&q.sub==="Inversión"){const mov=addMov(q.cat,q.sub,qMonto,qNota,"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}`);setInvModalData({monto:parseFloat(qMonto),mes,año,movId:mov.id});setShowInvModal(true);}else{addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);}setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
             {tarjetaMes>0&&<button onClick={()=>{const monto=prompt("¿Cuánto pagaste a tu tarjeta?");if(monto&&parseFloat(monto)>0){addMov("Deuda","Pago de tarjeta",monto,"Pago a tarjeta de crédito","pago_tarjeta");showToast("✅ Pago de tarjeta registrado");}}} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.purple}33`,background:C.purple+"10",color:C.purple,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💳 Registrar pago a tarjeta de crédito</button>}
+            {inversiones.length>0&&<button onClick={()=>setShowRetiroModal(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.cyan}33`,background:C.cyan+"10",color:C.cyan,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💰 Retirar inversión</button>}
             {!hasRegToday&&<button onClick={markNoSpend} style={{width:"100%",padding:10,borderRadius:10,border:`2px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>✅ Hoy no gasté nada</button>}
           </div>:<Card style={{marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{fontSize:18}}>🤖</span><div><div style={{fontSize:13,fontWeight:700,color:C.t1}}>Escríbelo o díctalo 🎤</div><div style={{fontSize:10,color:C.t3}}>Usa el micrófono de tu teclado</div></div></div>
@@ -940,16 +974,26 @@ export default function AppPro({ onLogout, onGoCalc }){
               <div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:10}}>🔭 Proyección si sigues invirtiendo igual</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {años.map(a=>{
-                  const totalProyectado=inversiones.reduce((sum,inv)=>{
-                    const mesesBase=(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes));
-                    const mesesTotal=Math.max(0,mesesBase)+(a*12);
+                  // Valor actual de las inversiones existentes creciendo
+                  const valorExistente=inversiones.reduce((sum,inv)=>{
+                    const mesesBase=Math.max(0,(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes)));
+                    const mesesTotal=mesesBase+(a*12);
                     return sum+inv.monto*Math.pow(1+(inv.tasa/100)/12,mesesTotal);
                   },0);
-                  const aporteMensual=inversiones.reduce((s,i)=>s+i.monto,0)/Math.max(1,inversiones.length);
-                  const totalConAportes=totalProyectado+aporteMensual*12*a;
+                  // Aportación mensual total (suma de todos los depósitos del último mes)
+                  const aporteMensualTotal=inversiones.reduce((s,i)=>s+i.monto,0);
+                  // Tasa promedio ponderada
+                  const tasaProm=inversiones.reduce((s,i)=>s+i.tasa*i.monto,0)/Math.max(1,aporteMensualTotal);
+                  const tasaMensual=(tasaProm/100)/12;
+                  // Valor futuro de aportaciones mensuales futuras: PMT * ((1+r)^n - 1) / r
+                  const mesesFuturos=a*12;
+                  const valorAportaciones=tasaMensual>0
+                    ? aporteMensualTotal*((Math.pow(1+tasaMensual,mesesFuturos)-1)/tasaMensual)
+                    : aporteMensualTotal*mesesFuturos;
+                  const total=valorExistente+valorAportaciones;
                   return <div key={a} style={{background:C.bg,borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
                     <div style={{fontSize:10,color:C.t3,marginBottom:3}}>En {a} año{a>1?"s":""}</div>
-                    <div style={{fontSize:15,fontWeight:800,color:C.accent}}>{fmt(totalConAportes)}</div>
+                    <div style={{fontSize:15,fontWeight:800,color:C.accent}}>{fmt(total)}</div>
                   </div>;
                 })}
               </div>
