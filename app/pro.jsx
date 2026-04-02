@@ -114,7 +114,7 @@ export default function AppPro({ onLogout, onGoCalc }){
 
   const addMov=(cat,sub,monto,desc="",metodo="efectivo",extraId=null)=>{const isIng=cat==="Ingresos";const isPagoTarjeta=sub==="Pago de tarjeta";const d=new Date();const mi=MESES.indexOf(mes);const fecha=`${año}-${String(mi+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const id=extraId||(Date.now()+Math.floor(Math.random()*10000));const g={id,fecha,mes,año,cat,sub,monto:isIng?Math.abs(+monto):isPagoTarjeta?-Math.abs(+monto):-Math.abs(+monto),desc,metodo:isIng?"efectivo":isPagoTarjeta?"pago_tarjeta":metodo};setGastos(prev=>[...prev,g]);return g;};
   const delMov=id=>{setGastos(prev=>prev.filter(g=>g.id!==id));setInversiones(prev=>prev.filter(i=>i.id!==id));};
-  const editMov=(id,nc,ns,nm,nn,met)=>{setGastos(prev=>prev.map(g=>{if(g.id!==id)return g;const isIng=nc==="Ingresos";return{...g,cat:nc,sub:ns,monto:isIng?Math.abs(+nm):-Math.abs(+nm),desc:nn,metodo:met||g.metodo||"efectivo"};}));setEditingMov(null);showToast("✅ Movimiento actualizado");};
+  const editMov=(id,nc,ns,nm,nn,met)=>{setGastos(prev=>prev.map(g=>{if(g.id!==id)return g;const isIng=nc==="Ingresos";return{...g,cat:nc,sub:ns,monto:isIng?Math.abs(+nm):-Math.abs(+nm),desc:nn,metodo:met||g.metodo||"efectivo"};}));setInversiones(prev=>prev.map(inv=>{if(inv.id!==id)return inv;return{...inv,monto:Math.abs(+nm)};}));setEditingMov(null);showToast("✅ Movimiento actualizado");};
 
   const handleAiEntry=async()=>{if(!aiText.trim())return;setAiLoading(true);try{const cl=QUICK_ITEMS.map(q=>`${q.cat}|${q.sub}:${q.label}`).join(",");const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:`Analiza texto y extrae movimientos. Responde SOLO JSON:[{"cat":"","sub":"","monto":0,"nota":"","tipo":"ingreso|gasto|ahorro","metodo":"efectivo|tarjeta"}]. Si mencionan tarjeta usa metodo tarjeta, si no, usa efectivo. Categorías:${cl}. Texto:"${aiText}"`}]})});const d=await r.json();setAiResults(JSON.parse((d.content?.[0]?.text||"[]").replace(/```json|```/g,"").trim()));}catch(e){showToast("Error");}setAiLoading(false);};
   const confirmAi=()=>{if(!aiResults)return;aiResults.forEach(r=>addMov(r.cat,r.sub,r.monto,r.nota,r.metodo||"efectivo"));showToast(`✅ ${aiResults.length} registrados`);setAiText("");setAiResults(null);setAiMode(false);};
@@ -134,7 +134,15 @@ export default function AppPro({ onLogout, onGoCalc }){
   const tarjetaMes=useMemo(()=>gMes.filter(g=>g.metodo==="tarjeta"&&g.sub!=="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
   const efectivoMes=useMemo(()=>gMes.filter(g=>g.metodo==="efectivo"&&isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
   const pagosTarjetaMes=useMemo(()=>gMes.filter(g=>g.sub==="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
-  const balMes=saldoInicial+ingMes-egrMes-ahoMes;
+  // Inversiones activas — se restan del disponible mientras están invertidas
+  const totalInvertidoActivo=inversiones.reduce((s,i)=>s+i.monto,0);
+  // Rendimientos acumulados de inversiones activas
+  const hoyInv=new Date();
+  const rendimientosActivos=inversiones.reduce((s,inv)=>{
+    const meses=Math.max(0,(hoyInv.getFullYear()-inv.año)*12+(hoyInv.getMonth()-MESES.indexOf(inv.mes)));
+    return s+(inv.monto*Math.pow(1+(inv.tasa/100)/12,meses)-inv.monto);
+  },0);
+  const balMes=saldoInicial+ingMes-egrMes-ahoMes-totalInvertidoActivo+rendimientosActivos;
   const ingAño=useMemo(()=>gAño.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0),[gAño]);
   const egrAño=useMemo(()=>gAño.filter(g=>isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0),[gAño]);
   const ahoAño=useMemo(()=>gAño.filter(g=>isApartado(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0),[gAño]);
@@ -338,10 +346,14 @@ export default function AppPro({ onLogout, onGoCalc }){
               const meses=Math.max(0,(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes)));
               const valorActual=inv.monto*Math.pow(1+(inv.tasa/100)/12,meses);
               return <button key={i} onClick={()=>{
-                addMov("Ingresos","Retiro de inversión",valorActual,`Retiro de ${inv.instrumento}`,"efectivo");
+                // Al retirar: eliminamos la inversión y registramos solo los rendimientos como ingreso
+                const rendimiento=valorActual-inv.monto;
                 setInversiones(prev=>prev.filter((_,j)=>j!==i));
                 setGastos(prev=>prev.filter(g=>g.id!==inv.id));
-                showToast(`✅ Retiro de ${inv.instrumento}: ${fmt(valorActual)}`);
+                if(rendimiento>0){
+                  addMov("Ingresos","Rendimiento de inversión",rendimiento,`Rendimiento de ${inv.instrumento}`,"efectivo");
+                }
+                showToast(`✅ Retiro de ${inv.instrumento}: ${fmt(valorActual)} de vuelta a tu liquidez`);
                 setShowRetiroModal(false);
               }} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:10,border:`1px solid ${C.border}`,background:C.bg,cursor:"pointer",marginBottom:8,textAlign:"left"}}>
                 <div>
