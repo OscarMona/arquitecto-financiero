@@ -46,6 +46,11 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [editingCat,setEditingCat]=useState(null);
   const [editingCatDraft,setEditingCatDraft]=useState({});
   const [editandoConfig,setEditandoConfig]=useState(false);
+  const [inversiones,setInversiones]=useState([]);
+  const [showInvModal,setShowInvModal]=useState(false);
+  const [invModalData,setInvModalData]=useState({monto:0,mes:"",año:0});
+  const [invInstrumento,setInvInstrumento]=useState("");
+  const [invTasa,setInvTasa]=useState("");
   const [prorateados,setProrateados]=useState({});
   const [prorateosRechazados,setProrateosRechazados]=useState({});
   const [programadosPagados,setProgramadosPagados]=useState({});
@@ -84,6 +89,7 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.diaPago)setDiaPago(data.diaPago);
         if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
         if(data.programadosPagados)setProgramadosPagados(data.programadosPagados);
+        if(data.inversiones)setInversiones(data.inversiones);
       }
       setLoaded(true);
     };
@@ -94,7 +100,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
@@ -312,13 +318,41 @@ export default function AppPro({ onLogout, onGoCalc }){
   }
 
   /* MAIN APP */
-  const tabs=[{id:"resumen",icon:"📊",label:"Resumen"},{id:"registro",icon:"➕",label:"Registrar"},{id:"presupuesto",icon:"🎯",label:"Presupuesto"},{id:"perfil",icon:"👤",label:"Perfil"}];
+  const tabs=[{id:"resumen",icon:"📊",label:"Resumen"},{id:"registro",icon:"➕",label:"Registrar"},{id:"presupuesto",icon:"🎯",label:"Presupuesto"},{id:"inversiones",icon:"📈",label:"Inversiones"},{id:"perfil",icon:"👤",label:"Perfil"}];
 
   return(
     <div style={{background:C.bg,minHeight:"100vh",color:C.t1,fontFamily:"'DM Sans',system-ui,sans-serif",paddingBottom:80}}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet"/>
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}} input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none} input[type=number]{-moz-appearance:textfield}`}</style>
       {toast&&<div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:C.accent,color:"#000",padding:"10px 20px",borderRadius:10,fontSize:13,fontWeight:600,zIndex:9999,animation:"fadeIn 0.3s"}}>{toast}</div>}
+
+      {/* MODAL INVERSIÓN */}
+      {showInvModal&&<div style={{position:"fixed",inset:0,background:"#000a",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        <div style={{background:C.card,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,border:`1px solid ${C.accent}33`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:4}}>📈 ¿Dónde invertiste?</div>
+          <div style={{fontSize:11,color:C.t3,marginBottom:16}}>Registramos {fmt(invModalData.monto)} para calcular tus rendimientos</div>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:11,color:C.t3,marginBottom:4}}>Instrumento (ej: Nu, Cetes, GBM)</div>
+            <input type="text" placeholder="¿Dónde lo invertiste?" value={invInstrumento} onChange={e=>setInvInstrumento(e.target.value)}
+              style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:14,outline:"none"}}/>
+          </div>
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:11,color:C.t3,marginBottom:4}}>Tasa anual (%)</div>
+            <input type="number" placeholder="ej: 13" value={invTasa} onChange={e=>setInvTasa(e.target.value)}
+              style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:14,outline:"none"}}/>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{setShowInvModal(false);setInvInstrumento("");setInvTasa("");}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:13,cursor:"pointer"}}>Omitir</button>
+            <button onClick={()=>{
+              if(invInstrumento&&invTasa){
+                setInversiones(prev=>[...prev,{monto:invModalData.monto,mes:invModalData.mes,año:invModalData.año,instrumento:invInstrumento,tasa:parseFloat(invTasa)}]);
+                showToast(`✅ Inversión en ${invInstrumento} registrada al ${invTasa}%`);
+              }
+              setShowInvModal(false);setInvInstrumento("");setInvTasa("");
+            }} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",fontSize:13,fontWeight:700,cursor:"pointer"}}>Guardar inversión →</button>
+          </div>
+        </div>
+      </div>}
 
       <div style={{margin:"0 16px 8px",padding:"8px 12px",background:C.warning+"12",borderRadius:8,border:`1px solid ${C.warning}33`,textAlign:"center"}}><span style={{fontSize:11,color:C.warning}}>🚧 Estamos en construcción — tu feedback nos ayuda a mejorar</span></div>
 
@@ -623,7 +657,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:14,border:`1px solid ${C.border}`}}><input type="number" value={qMonto} onChange={e=>setQMonto(e.target.value)} placeholder="$0" style={{background:"transparent",border:"none",color:C.t1,fontSize:36,fontWeight:800,textAlign:"center",outline:"none",width:"100%",fontFamily:"'Space Grotesk',monospace"}}/><input type="text" value={qNota} onChange={e=>setQNota(e.target.value)} placeholder="Nota (opcional)" style={{background:"transparent",border:"none",color:C.t3,fontSize:12,textAlign:"center",outline:"none",width:"100%",marginTop:4}}/></div>
             <div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"gasto",l:"💸 Gasto",c:C.danger},{id:"ingreso",l:"💰 Ingreso",c:C.accent},{id:"ahorro",l:"🐷 Ahorro",c:C.cyan}].map(t=><button key={t.id} onClick={()=>setQTipo(t.id)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${qTipo===t.id?t.c:C.border}`,background:qTipo===t.id?t.c+"15":"transparent",color:qTipo===t.id?t.c:C.t3,fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>)}</div>
             {qTipo==="gasto"&&<div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"efectivo",l:"💵 Efectivo/Débito",c:C.accent},{id:"tarjeta",l:"💳 Tarjeta crédito",c:C.purple}].map(m=><button key={m.id} onClick={()=>setQMetodo(m.id)} style={{flex:1,padding:6,borderRadius:8,border:`2px solid ${qMetodo===m.id?m.c:C.border}`,background:qMetodo===m.id?m.c+"15":"transparent",color:qMetodo===m.id?m.c:C.t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{m.l}</button>)}</div>}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);if(q.tipo==="ahorro"&&q.sub==="Inversión"){setInvModalData({monto:parseFloat(qMonto),mes,año});setShowInvModal(true);}setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
             {tarjetaMes>0&&<button onClick={()=>{const monto=prompt("¿Cuánto pagaste a tu tarjeta?");if(monto&&parseFloat(monto)>0){addMov("Deuda","Pago de tarjeta",monto,"Pago a tarjeta de crédito","pago_tarjeta");showToast("✅ Pago de tarjeta registrado");}}} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.purple}33`,background:C.purple+"10",color:C.purple,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💳 Registrar pago a tarjeta de crédito</button>}
             {!hasRegToday&&<button onClick={markNoSpend} style={{width:"100%",padding:10,borderRadius:10,border:`2px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>✅ Hoy no gasté nada</button>}
           </div>:<Card style={{marginBottom:14}}>
@@ -863,6 +897,102 @@ export default function AppPro({ onLogout, onGoCalc }){
             </Card>}
           </div>
         </div>}<button onClick={()=>{if(confirm("Reiniciar presupuesto? Esto borra tu plan actual.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{width:"100%",padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer",marginTop:16}}>Reiniciar presupuesto desde cero</button></div>}
+
+        {tab==="inversiones"&&<div>
+          <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:4}}>📈 Mis inversiones</div>
+          <p style={{fontSize:11,color:C.t3,margin:"0 0 12px"}}>Cada depósito crece de forma independiente según su tasa</p>
+
+          {/* RESUMEN DEL PORTAFOLIO */}
+          {inversiones.length>0&&(()=>{
+            const hoy=new Date();
+            const totalActual=inversiones.reduce((sum,inv)=>{
+              const mesesTranscurridos=(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-(MESES.indexOf(inv.mes)));
+              const meses=Math.max(0,mesesTranscurridos);
+              return sum+inv.monto*Math.pow(1+(inv.tasa/100)/12,meses);
+            },0);
+            const totalInvertido=inversiones.reduce((s,i)=>s+i.monto,0);
+            const rendimiento=totalActual-totalInvertido;
+            const tasaProm=inversiones.reduce((s,i)=>s+i.tasa*i.monto,0)/totalInvertido;
+            return <Card style={{marginBottom:12,background:C.accent+"10",border:`1px solid ${C.accent}33`}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💰 Total invertido</div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.t1}}>{fmt(totalInvertido)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>📈 Valor actual</div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.accent}}>{fmt(totalActual)}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>✨ Rendimiento</div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.cyan}}>+{fmt(rendimiento)}</div>
+                </div>
+              </div>
+              <div style={{textAlign:"center",fontSize:11,color:C.t2}}>Tasa promedio ponderada: <strong style={{color:C.accent}}>{tasaProm.toFixed(1)}% anual</strong></div>
+            </Card>;
+          })()}
+
+          {/* PROYECCIÓN A FUTURO */}
+          {inversiones.length>0&&(()=>{
+            const hoy=new Date();
+            const años=[1,3,5,10];
+            return <Card style={{marginBottom:12}}>
+              <div style={{fontSize:12,fontWeight:700,color:C.t1,marginBottom:10}}>🔭 Proyección si sigues invirtiendo igual</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {años.map(a=>{
+                  const totalProyectado=inversiones.reduce((sum,inv)=>{
+                    const mesesBase=(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes));
+                    const mesesTotal=Math.max(0,mesesBase)+(a*12);
+                    return sum+inv.monto*Math.pow(1+(inv.tasa/100)/12,mesesTotal);
+                  },0);
+                  const aporteMensual=inversiones.reduce((s,i)=>s+i.monto,0)/Math.max(1,inversiones.length);
+                  const totalConAportes=totalProyectado+aporteMensual*12*a;
+                  return <div key={a} style={{background:C.bg,borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:10,color:C.t3,marginBottom:3}}>En {a} año{a>1?"s":""}</div>
+                    <div style={{fontSize:15,fontWeight:800,color:C.accent}}>{fmt(totalConAportes)}</div>
+                  </div>;
+                })}
+              </div>
+            </Card>;
+          })()}
+
+          {/* LISTA DE INVERSIONES */}
+          {inversiones.length===0?<Card style={{textAlign:"center",padding:30}}>
+            <div style={{fontSize:36,marginBottom:8}}>📈</div>
+            <div style={{fontSize:13,color:C.t2,marginBottom:4}}>Aún no tienes inversiones registradas</div>
+            <div style={{fontSize:11,color:C.t3}}>Cuando registres un Ahorro/Inversión la app te preguntará dónde y a qué tasa</div>
+          </Card>:<div style={{marginBottom:12}}>
+            {inversiones.map((inv,i)=>{
+              const hoy=new Date();
+              const meses=Math.max(0,(hoy.getFullYear()-inv.año)*12+(hoy.getMonth()-MESES.indexOf(inv.mes)));
+              const valorActual=inv.monto*Math.pow(1+(inv.tasa/100)/12,meses);
+              const rendimiento=valorActual-inv.monto;
+              return <Card key={i} style={{marginBottom:8,padding:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.t1}}>{inv.instrumento}</div>
+                    <div style={{fontSize:10,color:C.t3}}>{inv.mes} {inv.año} · {inv.tasa}% anual</div>
+                  </div>
+                  <button onClick={()=>setInversiones(prev=>prev.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:12}}>✕</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  <div style={{textAlign:"center",background:C.bg,borderRadius:8,padding:"6px 4px"}}>
+                    <div style={{fontSize:9,color:C.t3}}>Invertido</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.t1}}>{fmt(inv.monto)}</div>
+                  </div>
+                  <div style={{textAlign:"center",background:C.bg,borderRadius:8,padding:"6px 4px"}}>
+                    <div style={{fontSize:9,color:C.t3}}>Valor hoy</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.accent}}>{fmt(valorActual)}</div>
+                  </div>
+                  <div style={{textAlign:"center",background:C.bg,borderRadius:8,padding:"6px 4px"}}>
+                    <div style={{fontSize:9,color:C.t3}}>Rendimiento</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.cyan}}>+{fmt(rendimiento)}</div>
+                  </div>
+                </div>
+              </Card>;
+            })}
+          </div>}
+        </div>}
 
         {tab==="perfil"&&<div>
           <div style={{textAlign:"center",padding:"16px 0"}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><svg width="60" height="60" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="57" stroke={C.accent} strokeWidth="2.5" fill="none" opacity="0.2"/><rect x="30" y="72" width="60" height="6" rx="1.5" fill={C.accent} opacity="0.85"/><rect x="38" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="57.5" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="77" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="36" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><rect x="55.5" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><rect x="75" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><path d="M28 43 L60 24 L92 43" stroke={C.accent} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="28" y1="43" x2="92" y2="43" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round"/><text x="60" y="65" textAnchor="middle" fontSize="20" fontWeight="700" fontFamily="sans-serif" fill={C.accent}>$</text><rect x="20" y="38" width="4" height="40" rx="1" fill={C.accent+"55"}/><path d="M96 78 L96 38 L108 78 Z" stroke={C.accent+"55"} strokeWidth="1.5" fill="none"/></svg></div><div style={{fontSize:18,fontWeight:700,color:C.t1}}>{nombre}</div><div style={{fontSize:11,color:C.accent,marginTop:2}}>Arquitecto Financiero Pro ✓</div><div style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:8,background:racha>=7?C.warning+"15":C.card,borderRadius:20,padding:"4px 14px",border:`1px solid ${racha>=7?C.warning+"33":C.border}`}}><span style={{fontSize:14}}>{racha>=30?"🏆":racha>=7?"🔥":"📅"}</span><span style={{fontSize:12,fontWeight:700,color:racha>=7?C.warning:C.t2}}>{racha} días de racha</span></div></div>
