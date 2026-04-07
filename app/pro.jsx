@@ -425,35 +425,49 @@ export default function AppPro({ onLogout, onGoCalc }){
           {hasBudget&&(()=>{
             const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
             const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-            const balance=ingPres-egrPres;
-            const deficit=balance<0;
-            const ajustado=balance>=0&&balance<ingPres*0.1;
+            const invPres=Object.entries(presMes).filter(([k])=>k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            // Valor actual de inversiones con rendimientos
+            const hoyS=new Date();
+            const invValorActual=inversiones.reduce((s,inv)=>{
+              const mesesT=Math.max(0,(hoyS.getFullYear()-inv.año)*12+(hoyS.getMonth()-MESES.indexOf(inv.mes)));
+              return s+inv.monto*Math.pow(1+(inv.tasa/100)/12,mesesT);
+            },0);
+            const liquidez=ingPres-egrPres-invPres;
+            const deficit=liquidez+invPres<0;
+            const ajustado=!deficit&&liquidez<ingPres*0.05;
             const color=deficit?C.danger:ajustado?C.warning:C.accent;
             const bgColor=deficit?C.danger+"15":ajustado?C.warning+"15":C.accent+"10";
             const borderColor=deficit?C.danger+"44":ajustado?C.warning+"44":C.accent+"33";
             const emoji=deficit?"🔴":ajustado?"🟡":"🟢";
             const mensaje=deficit
-              ?`Tu presupuesto tiene un déficit de ${fmt(Math.abs(balance))} — gastas más de lo que ganas`
+              ?`Tu presupuesto tiene un déficit — gastas más de lo que ganas`
               :ajustado
-              ?`Tu margen es muy ajustado — solo te queda el ${Math.round((balance/ingPres)*100)}% de tus ingresos`
-              :`Tu presupuesto está sano — te sobran ${fmt(balance)} al mes`;
+              ?`Liquidez ajustada — casi todo comprometido`
+              :`Presupuesto sano — ${fmt(liquidez)} en liquidez + ${fmt(invPres)} en inversión`;
             return ingPres>0?<Card style={{marginBottom:12,background:bgColor,border:`1px solid ${borderColor}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <span style={{fontSize:13,fontWeight:700,color:C.t1}}>📋 Tu presupuesto de {mes}</span>
                 <span style={{fontSize:18}}>{emoji}</span>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:10}}>
                 <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
                   <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💰 Ingresos</div>
-                  <div style={{fontSize:14,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
+                  <div style={{fontSize:13,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
                 </div>
                 <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
                   <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💸 Egresos</div>
-                  <div style={{fontSize:14,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
+                  <div style={{fontSize:13,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
                 </div>
                 <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>{deficit?"⚠️ Déficit":"✅ Sobrante"}</div>
-                  <div style={{fontSize:14,fontWeight:800,color}}>{fmt(Math.abs(balance))}</div>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>📈 Inversión</div>
+                  <div style={{fontSize:13,fontWeight:800,color:C.cyan}}>
+                    {invValorActual>0?fmt(invValorActual):fmt(invPres)}
+                    {invValorActual>invPres&&invPres>0&&<span style={{fontSize:8,color:C.cyan,display:"block"}}>+{fmt(invValorActual-invPres)}</span>}
+                  </div>
+                </div>
+                <div style={{textAlign:"center",padding:"8px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💵 Liquidez</div>
+                  <div style={{fontSize:13,fontWeight:800,color:liquidez>=0?C.accent:C.danger}}>{fmt(liquidez)}</div>
                 </div>
               </div>
               <div style={{fontSize:11,color,fontWeight:600,textAlign:"center",padding:"6px 8px",background:C.bg,borderRadius:8}}>{mensaje}</div>
@@ -803,31 +817,38 @@ export default function AppPro({ onLogout, onGoCalc }){
           {(()=>{
             const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
             const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-            const balance=ingPres-egrPres;
-            const deficit=balance<0;
-            const ajustado=balance>=0&&balance<ingPres*0.1;
+            const invPres=Object.entries(presMes).filter(([k])=>k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const hoyS2=new Date();
+            const invValorActual2=inversiones.reduce((s,inv)=>{const mesesT=Math.max(0,(hoyS2.getFullYear()-inv.año)*12+(hoyS2.getMonth()-MESES.indexOf(inv.mes)));return s+inv.monto*Math.pow(1+(inv.tasa/100)/12,mesesT);},0);
+            const liquidez=ingPres-egrPres-invPres;
+            const deficit=liquidez+invPres<0;
+            const ajustado=!deficit&&liquidez<ingPres*0.05;
             const color=deficit?C.danger:ajustado?C.warning:C.accent;
             const bgColor=deficit?C.danger+"15":ajustado?C.warning+"15":C.accent+"10";
             const borderColor=deficit?C.danger+"44":ajustado?C.warning+"44":C.accent+"33";
             const emoji=deficit?"🔴":ajustado?"🟡":"🟢";
             const mensaje=deficit
-              ?`Déficit de ${fmt(Math.abs(balance))} — gastas más de lo que ganas`
+              ?`Déficit — gastas más de lo que ganas`
               :ajustado
-              ?`Margen ajustado — solo te queda el ${Math.round((balance/ingPres)*100)}% de tus ingresos`
-              :`Presupuesto sano — te sobran ${fmt(balance)} al mes`;
+              ?`Liquidez ajustada — casi todo comprometido`
+              :`Presupuesto sano — ${fmt(liquidez)} liquidez + ${fmt(invPres)} inversión`;
             return ingPres>0?<div style={{background:bgColor,border:`1px solid ${borderColor}`,borderRadius:12,padding:"10px 14px",marginBottom:14}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:8}}>
                 <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
                   <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💰 Ingresos</div>
-                  <div style={{fontSize:13,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.accent}}>{fmt(ingPres)}</div>
                 </div>
                 <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
                   <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💸 Egresos</div>
-                  <div style={{fontSize:13,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.danger}}>{fmt(egrPres)}</div>
                 </div>
                 <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
-                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>{deficit?"⚠️ Déficit":"✅ Sobrante"}</div>
-                  <div style={{fontSize:13,fontWeight:800,color}}>{fmt(Math.abs(balance))}</div>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>📈 Inversión</div>
+                  <div style={{fontSize:12,fontWeight:800,color:C.cyan}}>{invValorActual2>0?fmt(invValorActual2):fmt(invPres)}{invValorActual2>invPres&&invPres>0&&<span style={{fontSize:8,color:C.cyan,display:"block"}}>+{fmt(invValorActual2-invPres)}</span>}</div>
+                </div>
+                <div style={{textAlign:"center",padding:"7px 4px",background:C.bg,borderRadius:8}}>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:2}}>💵 Liquidez</div>
+                  <div style={{fontSize:12,fontWeight:800,color:liquidez>=0?C.accent:C.danger}}>{fmt(liquidez)}</div>
                 </div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color,fontWeight:600}}>
