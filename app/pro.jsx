@@ -46,6 +46,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [editingCat,setEditingCat]=useState(null);
   const [editingCatDraft,setEditingCatDraft]=useState({});
   const [editandoConfig,setEditandoConfig]=useState(false);
+  const [catExpanded,setCatExpanded]=useState({});
   const [inversiones,setInversiones]=useState([]);
   const [showInvModal,setShowInvModal]=useState(false);
   const [showRetiroModal,setShowRetiroModal]=useState(false);
@@ -493,9 +494,9 @@ export default function AppPro({ onLogout, onGoCalc }){
                 const real=gMes.filter(g=>g.cat===c.key&&g.sub===sub).reduce((s,g)=>s+Math.abs(g.monto),0);
                 return {sub,pres,real};
               }).filter(s=>s.pres>0||s.real>0);
-              const [open,setOpen]=React.useState(false);
+              const open=!!catExpanded[c.key];
               return <div key={i} style={{marginBottom:6}}>
-                <div onClick={()=>subs.length>0&&setOpen(!open)} style={{cursor:subs.length>0?"pointer":"default"}}>
+                <div onClick={()=>subs.length>0&&setCatExpanded(prev=>({...prev,[c.key]:!prev[c.key]}))} style={{cursor:subs.length>0?"pointer":"default"}}>
                   <Progress value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>
                   {subs.length>0&&<div style={{textAlign:"right",fontSize:9,color:C.t3,marginTop:-4,paddingRight:4}}>{open?"▲ ocultar":"▼ ver detalle"}</div>}
                 </div>
