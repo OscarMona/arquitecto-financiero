@@ -411,7 +411,20 @@ export default function AppPro({ onLogout, onGoCalc }){
 
       <div style={{padding:"14px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,color:C.t3}}>Hola, {nombre} 👋</div>{tab!=="presupuesto"&&<div style={{fontSize:15,fontWeight:700}}>{mes} {año}</div>}{tab!=="presupuesto"&&<div style={{fontSize:9,color:C.accent,fontWeight:600,marginTop:1}}>📊 Movimientos reales del mes</div>}</div><div style={{display:"flex",gap:6}}><button onClick={()=>{const i=MESES.indexOf(mes);if(i===0){if(año>2026){setMes(MESES[11]);setAño(año-1);}}else setMes(MESES[i-1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>←</button><button onClick={()=>{const i=MESES.indexOf(mes);if(i===11){if(año<2027){setMes(MESES[0]);setAño(año+1);}}else setMes(MESES[i+1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>→</button></div></div>
 
-      {(tab==="resumen"||tab==="registro")&&<div style={{display:"grid",gridTemplateColumns:tarjetaMes>0?"1fr 1fr 1fr 1fr 1fr":"1fr 1fr 1fr 1fr",gap:6,padding:"0 16px 4px"}}>{[{l:"Ingresos",v:ingMes,c:C.accent},{l:"Efectivo",v:efectivoMes,c:C.danger},tarjetaMes>0?{l:"💳 Tarjeta",v:tarjetaMes,c:C.purple}:null,{l:"Apartado",v:ahoMes,c:C.cyan},{l:"Disponible",v:balMes,c:balMes>=0?C.accent:C.danger}].filter(Boolean).map((s,i)=><div key={i} style={{background:C.card,borderRadius:10,padding:"8px 4px",textAlign:"center"}}><div style={{fontSize:8,color:C.t3}}>{s.l}</div><div style={{fontSize:12,fontWeight:700,color:s.c}}>{fmt(s.v)}</div></div>)}</div>}
+      {(tab==="resumen"||tab==="registro")&&<div style={{display:"grid",gridTemplateColumns:tarjetaMes>0?`1fr 1fr 1fr 1fr 1fr${totalInvertidoActivo>0?" 1fr":""}`:`1fr 1fr 1fr 1fr${totalInvertidoActivo>0?" 1fr":""}`,gap:6,padding:"0 16px 4px"}}>
+        {[
+          {l:"Ingresos",v:ingMes,c:C.accent,tip:null},
+          {l:"Efectivo",v:efectivoMes,c:C.danger,tip:null},
+          tarjetaMes>0?{l:"💳 Tarjeta",v:tarjetaMes,c:C.purple,tip:null}:null,
+          {l:"Apartado",v:ahoMes,c:C.cyan,tip:"Ahorro · Meta · Fondo"},
+          totalInvertidoActivo>0?{l:"📈 Inversión",v:totalInvertidoActivo,c:C.cyan,tip:"En instrumentos activos"}:null,
+          {l:"Disponible",v:balMes,c:balMes>=0?C.accent:C.danger,tip:null},
+        ].filter(Boolean).map((s,i)=><div key={i} style={{background:C.card,borderRadius:10,padding:"8px 4px",textAlign:"center"}}>
+          <div style={{fontSize:8,color:C.t3}}>{s.l}</div>
+          <div style={{fontSize:12,fontWeight:700,color:s.c}}>{fmt(s.v)}</div>
+          {s.tip&&<div style={{fontSize:7,color:C.t3,marginTop:1,lineHeight:1.2}}>{s.tip}</div>}
+        </div>)}
+      </div>}
       {(tab==="resumen"||tab==="registro")&&(tarjetaMes>0||deudaTarjetaInicial>0)&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{deudaTarjetaInicial>0&&<span style={{fontSize:10,color:C.t3}}> · Deuda anterior: {fmt(deudaTarjetaInicial)}</span>}{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>{tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Tu saldo disponible muestra {fmt(balMes)}, pero necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu tarjeta cuando llegue el corte. Tu disponible real es <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}{deudaTarjetaInicial>0&&<div style={{fontSize:11,color:C.t3,paddingLeft:24,marginTop:4}}>Deuda total incluyendo anterior: <strong style={{color:C.purple}}>{fmt(tarjetaMes+deudaTarjetaInicial-pagosTarjetaMes)}</strong></div>}</div>}
 
       <div style={{padding:"0 16px",animation:"fadeIn 0.3s"}}>
