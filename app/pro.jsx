@@ -485,7 +485,33 @@ export default function AppPro({ onLogout, onGoCalc }){
                 </div>
               </>;
             })()}
-            {presVsReal.map((c,i)=><Progress key={i} value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>)}</Card>}
+            {presVsReal.map((c,i)=>{
+              // Subcategorías de esta categoría
+              const subs=(SUBCATS[c.key]||[]).map(sub=>{
+                const subKey=`${c.key}__${sub}`;
+                const pres=parseFloat(presMes[subKey])||0;
+                const real=gMes.filter(g=>g.cat===c.key&&g.sub===sub).reduce((s,g)=>s+Math.abs(g.monto),0);
+                return {sub,pres,real};
+              }).filter(s=>s.pres>0||s.real>0);
+              const [open,setOpen]=React.useState(false);
+              return <div key={i} style={{marginBottom:6}}>
+                <div onClick={()=>subs.length>0&&setOpen(!open)} style={{cursor:subs.length>0?"pointer":"default"}}>
+                  <Progress value={c.real} max={c.pres} color={CAT_COLORS[c.key]} label={`${c.icon} ${c.label}`}/>
+                  {subs.length>0&&<div style={{textAlign:"right",fontSize:9,color:C.t3,marginTop:-4,paddingRight:4}}>{open?"▲ ocultar":"▼ ver detalle"}</div>}
+                </div>
+                {open&&subs.length>0&&<div style={{marginLeft:12,marginTop:4,borderLeft:`2px solid ${CAT_COLORS[c.key]}33`,paddingLeft:10}}>
+                  {subs.map((s,j)=><div key={j} style={{marginBottom:4}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
+                      <span style={{fontSize:10,color:C.t2}}>{s.sub}</span>
+                      <span style={{fontSize:10,fontWeight:600,color:s.real>s.pres&&s.pres>0?C.danger:C.t1}}>{fmt(s.real)}<span style={{color:C.t3,fontWeight:400}}> / {fmt(s.pres)}</span></span>
+                    </div>
+                    {s.pres>0&&<div style={{height:4,background:C.border,borderRadius:2,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${Math.min((s.real/s.pres)*100,100)}%`,background:s.real>s.pres?C.danger:CAT_COLORS[c.key],borderRadius:2,transition:"width 0.5s"}}/>
+                    </div>}
+                  </div>)}
+                </div>}
+              </div>;
+            })}</Card>}
           {pieData.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>¿A dónde se va tu dinero?</div><div style={{display:"flex",alignItems:"center",gap:12}}><ResponsiveContainer width="50%" height={130}><PieChart><Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={52} paddingAngle={2}>{pieData.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart></ResponsiveContainer><div style={{flex:1}}>{pieData.slice(0,5).map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><div style={{width:6,height:6,borderRadius:"50%",background:d.color,flexShrink:0}}/><span style={{fontSize:10,color:C.t2,flex:1}}>{d.name}</span><span style={{fontSize:10,fontWeight:600,color:C.t1}}>{fmt(d.value)}</span></div>)}</div></div></Card>}
           {trend.length>1&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>Tendencia {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={trend}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>fmt(v)}/><Area type="monotone" dataKey="ingresos" stroke={C.accent} fill={C.accent+"20"} strokeWidth={2} name="Ingresos"/><Area type="monotone" dataKey="egresos" stroke={C.danger} fill={C.danger+"20"} strokeWidth={2} name="Gastos"/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
           {projection.some(p=>p.hasPres)&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>🎯 Proyección {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={projection.filter(p=>p.hasPres)}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>v!=null?fmt(v):"—"}/><Area type="monotone" dataKey="proyectado" stroke={C.accent} fill={C.accent+"15"} strokeWidth={2} strokeDasharray="6 3" name="Plan"/><Area type="monotone" dataKey="real" stroke={C.cyan} fill={C.cyan+"20"} strokeWidth={3} name="Real" connectNulls/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
