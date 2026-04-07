@@ -424,7 +424,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             </div></div>
           {hasBudget&&(()=>{
             const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
             const balance=ingPres-egrPres;
             const deficit=balance<0;
             const ajustado=balance>=0&&balance<ingPres*0.1;
@@ -802,7 +802,7 @@ export default function AppPro({ onLogout, onGoCalc }){
           })()}
           {(()=>{
             const ingPres=presMes["Ingresos"]||Object.entries(presMes).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+            const egrPres=Object.entries(presMes).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
             const balance=ingPres-egrPres;
             const deficit=balance<0;
             const ajustado=balance>=0&&balance<ingPres*0.1;
