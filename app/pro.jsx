@@ -309,10 +309,18 @@ export default function AppPro({ onLogout, onGoCalc }){
                   setProgramados(prev=>prev.filter(x=>x.id!==p.id));
                   setPres(prev=>{
                     const up={...prev};
+                    const nombre=p.nombre.toLowerCase().trim();
                     Object.keys(up).forEach(pk=>{
                       if(up[pk]){
                         const ex={...up[pk]};
-                        Object.keys(ex).forEach(k=>{if(k.includes(p.nombre))delete ex[k];});
+                        Object.keys(ex).forEach(k=>{
+                          if(k.toLowerCase().includes(nombre)||k.includes(`__${p.nombre}`))delete ex[k];
+                        });
+                        // Recalcular totales de categoría
+                        ["Ahorro","Gastos_Programados","Gastos_Fijos"].forEach(cat=>{
+                          const total=Object.entries(ex).filter(([k])=>k.startsWith(`${cat}__`)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+                          if(total>0)ex[cat]=total; else delete ex[cat];
+                        });
                         up[pk]=ex;
                       }
                     });
@@ -515,7 +523,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             })}</Card>}
           {pieData.length>0&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>¿A dónde se va tu dinero?</div><div style={{display:"flex",alignItems:"center",gap:12}}><ResponsiveContainer width="50%" height={130}><PieChart><Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={52} paddingAngle={2}>{pieData.map((d,i)=><Cell key={i} fill={d.color}/>)}</Pie></PieChart></ResponsiveContainer><div style={{flex:1}}>{pieData.slice(0,5).map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}><div style={{width:6,height:6,borderRadius:"50%",background:d.color,flexShrink:0}}/><span style={{fontSize:10,color:C.t2,flex:1}}>{d.name}</span><span style={{fontSize:10,fontWeight:600,color:C.t1}}>{fmt(d.value)}</span></div>)}</div></div></Card>}
           {trend.length>1&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>Tendencia {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={trend}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>fmt(v)}/><Area type="monotone" dataKey="ingresos" stroke={C.accent} fill={C.accent+"20"} strokeWidth={2} name="Ingresos"/><Area type="monotone" dataKey="egresos" stroke={C.danger} fill={C.danger+"20"} strokeWidth={2} name="Gastos"/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
-          {projection.some(p=>p.hasPres)&&<Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>🎯 Proyección {año}</div><ResponsiveContainer width="100%" height={160}><AreaChart data={projection.filter(p=>p.hasPres)}><CartesianGrid strokeDasharray="3 3" stroke={C.border}/><XAxis dataKey="mes" stroke={C.t3} fontSize={10}/><YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/><Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>v!=null?fmt(v):"—"}/><Area type="monotone" dataKey="proyectado" stroke={C.accent} fill={C.accent+"15"} strokeWidth={2} strokeDasharray="6 3" name="Plan"/><Area type="monotone" dataKey="real" stroke={C.cyan} fill={C.cyan+"20"} strokeWidth={3} name="Real" connectNulls/><Legend wrapperStyle={{fontSize:10}}/></AreaChart></ResponsiveContainer></Card>}
+          
           {gMes.length===0&&presVsReal.length===0&&<div style={{textAlign:"center",padding:30,color:C.t3}}><div style={{fontSize:36,marginBottom:8}}>📝</div><p style={{fontSize:13}}>Ve a Registrar para agregar movimientos</p></div>}
 
           {/* PRORRATEO — tarjetas para gastos programados futuros sin ahorro asignado */}
@@ -913,10 +921,17 @@ export default function AppPro({ onLogout, onGoCalc }){
                     setProgramados(prev=>prev.filter(x=>x.id!==p.id));
                     setPres(prev=>{
                       const up={...prev};
+                      const nombre=p.nombre.toLowerCase().trim();
                       Object.keys(up).forEach(pk=>{
                         if(up[pk]){
                           const ex={...up[pk]};
-                          Object.keys(ex).forEach(k=>{if(k.includes(p.nombre))delete ex[k];});
+                          Object.keys(ex).forEach(k=>{
+                            if(k.toLowerCase().includes(nombre)||k.includes(`__${p.nombre}`))delete ex[k];
+                          });
+                          ["Ahorro","Gastos_Programados","Gastos_Fijos"].forEach(cat=>{
+                            const total=Object.entries(ex).filter(([k])=>k.startsWith(`${cat}__`)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+                            if(total>0)ex[cat]=total; else delete ex[cat];
+                          });
                           up[pk]=ex;
                         }
                       });
