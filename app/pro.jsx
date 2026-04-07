@@ -17,7 +17,7 @@ const fmt = n => { if(n==null||isNaN(n))return"$0"; const a=Math.abs(n); const s
 const catLabel = k => CATEGORIAS.find(c=>c.key===k)?.label||k;
 const catIcon = k => CATEGORIAS.find(c=>c.key===k)?.icon||"📦";
 const isApartado = c => c==="Ahorro";
-const isGasto = c => c!=="Ingresos"&&!isApartado(c);
+const isGasto = c => c!=="Ingresos"&&c!=="Inversion"&&!isApartado(c);
 const Card = ({children,style,onClick}) => <div onClick={onClick} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:16,...style}}>{children}</div>;
 const Progress = ({value,max,color=C.accent,label:l}) => { const p=max>0?Math.min((value/max)*100,150):0; const o=value>max&&max>0; return <div style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:C.t2}}>{l}</span><span style={{fontSize:11,color:o?C.danger:C.t2,fontWeight:600}}>{fmt(value)}/{fmt(max)}{o?" ⚠️":""}</span></div><div style={{height:6,background:C.border,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(p,100)}%`,background:o?C.danger:p>80?C.warning:color,borderRadius:3,transition:"width 0.5s"}}/></div></div>; };
 
@@ -105,7 +105,7 @@ export default function AppPro({ onLogout, onGoCalc }){
       saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones});
     },1000);
     return()=>clearTimeout(timer);
-  },[nombre,gastos,pres,programados,metas,onboarded,user,loaded]);
+  },[nombre,gastos,pres,programados,metas,onboarded,inversiones,user,loaded]);
   const curPK=pk(mes,año);
   const hasBudget=Object.keys(pres).length>0&&Object.values(pres).some(p=>Object.values(p).some(v=>parseFloat(v)>0));
 
@@ -150,7 +150,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const pieData=useMemo(()=>{const m={};gMes.filter(g=>isGasto(g.cat)).forEach(g=>{m[g.cat]=(m[g.cat]||0)+Math.abs(g.monto);});return Object.entries(m).map(([k,v])=>({name:catLabel(k),value:v,color:CAT_COLORS[k]||C.t3})).sort((a,b)=>b.value-a.value);},[gMes]);
   const presVsReal=useMemo(()=>CATEGORIAS.filter(c=>c.key!=="Ingresos").map(cat=>{const real=cat.key==="Inversion"?inversiones.filter(i=>i.mes===mes&&i.año===año).reduce((s,i)=>s+i.monto,0):gMes.filter(g=>g.cat===cat.key).reduce((s,g)=>s+Math.abs(g.monto),0);const p=presMes[cat.key]||0;return{...cat,real,pres:p,over:real>p&&p>0};}).filter(c=>c.real>0||c.pres>0),[gMes,presMes,inversiones,mes,año]);
   const trend=useMemo(()=>MESES.map(m=>{const gm=gastos.filter(g=>g.mes===m&&g.año===año);return{mes:m.slice(0,3),ingresos:gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0),egresos:gm.filter(g=>isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0)};}).filter(m=>m.ingresos>0||m.egresos>0),[gastos,año]);
-  const projection=useMemo(()=>{let ap=0,ar=0;return MESES.map(m=>{const pm=pres[pk(m,año)]||{};const pI=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const pE=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);ap+=pI-pE;const gm=gastos.filter(g=>g.mes===m&&g.año===año);const rI=gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0);const rE=gm.filter(g=>g.cat!=="Ingresos").reduce((s,g)=>s+Math.abs(g.monto),0);const hr=gm.length>0;if(hr)ar+=rI-rE;return{mes:m.slice(0,3),proyectado:pI>0?ap:null,real:hr?ar:null,hasPres:pI>0,hasReal:hr};});},[gastos,pres,año]);
+  const projection=useMemo(()=>{let ap=0,ar=0;return MESES.map(m=>{const pm=pres[pk(m,año)]||{};const pI=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const pE=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);ap+=pI-pE;const gm=gastos.filter(g=>g.mes===m&&g.año===año);const rI=gm.filter(g=>g.cat==="Ingresos").reduce((s,g)=>s+g.monto,0);const rE=gm.filter(g=>g.cat!=="Ingresos").reduce((s,g)=>s+Math.abs(g.monto),0);const hr=gm.length>0;if(hr)ar+=rI-rE;return{mes:m.slice(0,3),proyectado:pI>0?ap:null,real:hr?ar:null,hasPres:pI>0,hasReal:hr};});},[gastos,pres,año]);
   const racha=useMemo(()=>{const h=new Date();let d2=0;for(let d=0;d<365;d++){const f=new Date(h);f.setDate(f.getDate()-d);const fs=f.toISOString().slice(0,10);const tr=gastos.some(g=>g.fecha?.startsWith(fs));if(tr||d===0){if(tr)d2++;else continue;}else break;}return d2;},[gastos]);
   const score=useMemo(()=>{let s=50;if(racha>=30)s+=15;else if(racha>=14)s+=10;else if(racha>=7)s+=5;if(ingMes>0){const sr=(ahoMes/ingMes)*100;if(sr>=20)s+=15;else if(sr>=10)s+=8;else if(sr>0)s+=3;}const exc=presVsReal.filter(c=>c.over).length;const cp=presVsReal.filter(c=>c.pres>0).length;if(cp>0&&exc===0)s+=15;else if(cp>0&&exc<=2)s+=5;else if(exc>3)s-=10;if(balMes>0)s+=5;else if(balMes<0)s-=15;if(hasBudget)s+=5;if(metas.length>0)s+=5;return Math.max(0,Math.min(100,s));},[racha,ingMes,ahoMes,presVsReal,balMes,hasBudget,metas]);
   const scoreColor=score>=80?C.accent:score>=60?C.cyan:score>=40?C.warning:C.danger;
@@ -180,7 +180,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   if(showFirstBudget){
     const setFb=(k,v)=>setFbDraft(p=>({...p,[k]:v}));
     const fbT=prefix=>Object.entries(fbDraft).filter(([k])=>k.startsWith(prefix)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-    const tI=fbT("Ingresos__");const tE=Object.entries(fbDraft).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+    const tI=fbT("Ingresos__");const tE=Object.entries(fbDraft).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
     const is={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:14,fontWeight:600,outline:"none",textAlign:"right"};
     // Get all subs including custom ones added by user
     const allSubsWithExtras=(catKey)=>{
@@ -659,7 +659,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                       const pk2=`${mn}_${añoFlujo}`;
                       const pm=pres[pk2]||{};
                       const ingresoP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
-                      const egresoP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+                      const egresoP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
                       const prog=programados.filter(p=>p.mes===i);
                       const netoP=ingresoP-egresoP;
                       const gm=gastos.filter(g=>g.mes===mn&&g.año===añoFlujo);
@@ -670,7 +670,7 @@ export default function AppPro({ onLogout, onGoCalc }){
                       return{netoP,netoR,prog,pagoTarjeta,pasado:i<mesIdx,actual:i===mesIdx};
                     });
                     // Si es año siguiente, el acumulado arranca desde el final del año anterior
-                    const acumBaseP=añoFlujo>new Date().getFullYear()?MESES.reduce((s,mn)=>{const pk2=`${mn}_${añoFlujo-1}`;const pm=pres[pk2]||{};const iP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const eP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);return s+(iP-eP);},saldoInicial):saldoInicial;
+                    const acumBaseP=añoFlujo>new Date().getFullYear()?MESES.reduce((s,mn)=>{const pk2=`${mn}_${añoFlujo-1}`;const pm=pres[pk2]||{};const iP=Object.entries(pm).filter(([k])=>k.startsWith("Ingresos__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);const eP=Object.entries(pm).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);return s+(iP-eP);},saldoInicial):saldoInicial;
                     const acumBaseR=añoFlujo>new Date().getFullYear()?MESES.reduce((s,mn)=>{const gm=gastos.filter(g=>g.mes===mn&&g.año===añoFlujo-1);if(!gm.length)return s;const iR=gm.filter(g=>g.cat==="Ingresos").reduce((t,g)=>t+g.monto,0);const eR=gm.filter(g=>isGasto(g.cat)).reduce((t,g)=>t+Math.abs(g.monto),0);return s+(iR-eR);},saldoInicial):saldoInicial;
                     let acumP=acumBaseP,acumR=acumBaseR;
                     const acumPA=flujos.map(f=>{acumP+=f.netoP;return acumP;});
