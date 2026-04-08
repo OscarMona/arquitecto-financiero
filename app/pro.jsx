@@ -1024,7 +1024,10 @@ export default function AppPro({ onLogout, onGoCalc }){
               }).filter(Boolean)}
             </Card>}
           </div>
-        </div>}<button onClick={()=>{if(confirm("Reiniciar presupuesto? Esto borra tu plan actual.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{width:"100%",padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer",marginTop:16}}>Reiniciar presupuesto desde cero</button></div>}
+        </div>}<div style={{display:"flex",gap:8,marginTop:16}}>
+          <button onClick={()=>{if(confirm("¿Reiniciar presupuesto? Solo se borra el plan, tus movimientos y saldo se conservan.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer"}}>Reiniciar presupuesto</button>
+          <button onClick={()=>{if(confirm("¿Reiniciar TODO? Se borrarán presupuesto, movimientos, saldo, deuda y configuración. Esta acción no se puede deshacer.")){setPres({});setGastos([]);setInversiones([]);setProgramados([]);setMetas([]);setSaldoInicial(0);setDeudaTarjetaInicial(0);setDiaCorte(0);setDiaPago(0);setProrateados({});setProrateosRechazados({});setProgramadosPagados({});setOnboarded(false);showToast("Todo reiniciado");}}} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}55`,color:C.danger,fontSize:11,cursor:"pointer",fontWeight:700}}>⚠️ Reiniciar todo</button>
+        </div></div>}
 
         {tab==="inversiones"&&<div>
           <div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:4}}>📈 Mis inversiones</div>
