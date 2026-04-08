@@ -47,6 +47,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [editingCatDraft,setEditingCatDraft]=useState({});
   const [editandoConfig,setEditandoConfig]=useState(false);
   const [catExpanded,setCatExpanded]=useState({});
+  const [showPWABanner,setShowPWABanner]=useState(true);
   const [inversiones,setInversiones]=useState([]);
   const [showInvModal,setShowInvModal]=useState(false);
   const [showRetiroModal,setShowRetiroModal]=useState(false);
@@ -67,6 +68,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [addingTo,setAddingTo]=useState(null);
   const [extraName,setExtraName]=useState("");
   const [loaded,setLoaded]=useState(false);
+  const [pwaBannerCerrado,setPwaBannerCerrado]=useState(false);
 
   const { user } = useAuth();
 
@@ -90,6 +92,7 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.diaCorte)setDiaCorte(data.diaCorte);
         if(data.diaPago)setDiaPago(data.diaPago);
         if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
+        if(data.pwaBannerCerrado)setPwaBannerCerrado(data.pwaBannerCerrado);
         if(data.programadosPagados)setProgramadosPagados(data.programadosPagados);
         if(data.inversiones)setInversiones(data.inversiones);
       }
@@ -102,10 +105,10 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones,pwaBannerCerrado});
     },1000);
     return()=>clearTimeout(timer);
-  },[nombre,gastos,pres,programados,metas,onboarded,inversiones,user,loaded]);
+  },[nombre,gastos,pres,programados,metas,onboarded,inversiones,pwaBannerCerrado,user,loaded]);
   const curPK=pk(mes,año);
   const hasBudget=Object.keys(pres).length>0&&Object.values(pres).some(p=>Object.values(p).some(v=>parseFloat(v)>0));
 
@@ -172,13 +175,7 @@ export default function AppPro({ onLogout, onGoCalc }){
           <input type="text" value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Tu nombre" style={{width:"100%",boxSizing:"border-box",padding:"14px 16px",borderRadius:12,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:18,fontWeight:600,outline:"none",textAlign:"center"}} autoFocus/>
         </div>
         <button onClick={()=>nombre.trim()&&setOnboarded(true)} disabled={!nombre.trim()} style={{width:"100%",padding:16,borderRadius:12,border:"none",cursor:nombre.trim()?"pointer":"default",background:nombre.trim()?C.accent:C.border,color:nombre.trim()?"#000":C.t3,fontSize:16,fontWeight:700}}>Comenzar 🚀</button>
-        <div style={{marginTop:16,background:C.card,borderRadius:12,padding:"14px 16px",border:`1px solid ${C.border}`,textAlign:"left"}}>
-          <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:8}}>📲 Instala la app en tu celular</div>
-          <div style={{fontSize:11,color:C.t2,lineHeight:1.7}}>
-            <div>🍎 <strong style={{color:C.t1}}>iPhone:</strong> toca el botón compartir ↑ → "Añadir a pantalla de inicio"</div>
-            <div>🤖 <strong style={{color:C.t1}}>Android:</strong> toca el menú ⋮ → "Instalar app"</div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
@@ -436,7 +433,31 @@ export default function AppPro({ onLogout, onGoCalc }){
 
       <div style={{padding:"0 16px",animation:"fadeIn 0.3s"}}>
 
-        {tab==="resumen"&&<div>{!hasBudget?<Card style={{textAlign:"center",padding:30,background:`linear-gradient(135deg,${C.card},${C.accent}08)`,borderColor:C.accent+"22"}}><div style={{fontSize:48,marginBottom:12}}>🎯</div><h3 style={{fontFamily:"'Sora',sans-serif",fontSize:20,fontWeight:800,color:C.t1,margin:"0 0 8px"}}>Configura tu primer presupuesto</h3><p style={{color:C.t2,fontSize:13,margin:"0 0 20px",lineHeight:1.5}}>Te guiamos paso a paso. Solo necesitas saber cuánto ganas y en qué gastas.</p><button onClick={()=>{setShowFirstBudget(true);setFbStep(0);setFbDraft({});}} style={{padding:"14px 28px",borderRadius:12,border:"none",background:C.accent,color:"#000",fontSize:15,fontWeight:700,cursor:"pointer"}}>Empezar →</button></Card>:<div>
+        {tab==="resumen"&&<div>
+          {!pwaBannerCerrado&&<div style={{margin:"0 0 12px",padding:"14px 16px",background:C.accent+"12",borderRadius:12,border:`1px solid ${C.accent}33`,display:"flex",alignItems:"flex-start",gap:12}}>
+            <span style={{fontSize:24}}>📲</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>Instala la app en tu celular</div>
+              <div style={{fontSize:11,color:C.t2,lineHeight:1.7,marginBottom:8}}>
+                <div>🍎 <strong style={{color:C.t1}}>iPhone:</strong> compartir ↑ → "Añadir a pantalla de inicio"</div>
+                <div>🤖 <strong style={{color:C.t1}}>Android:</strong> menú ⋮ → "Instalar app"</div>
+              </div>
+              <button onClick={()=>setPwaBannerCerrado(true)} style={{padding:"6px 14px",borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>Ya la instalé ✓</button>
+            </div>
+            <button onClick={()=>setPwaBannerCerrado(true)} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:16,padding:0}}>✕</button>
+          </div>}
+          {showPWABanner&&<div style={{background:`linear-gradient(135deg,${C.card},${C.accent}08)`,border:`1px solid ${C.accent}33`,borderRadius:12,padding:"12px 14px",marginBottom:12,display:"flex",alignItems:"flex-start",gap:10}}>
+            <span style={{fontSize:22}}>📲</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:4}}>Descarga la app en tu celular</div>
+              <div style={{fontSize:10,color:C.t2,lineHeight:1.7}}>
+                <div>🍎 <strong style={{color:C.t1}}>iPhone:</strong> compartir ↑ → "Añadir a pantalla de inicio"</div>
+                <div>🤖 <strong style={{color:C.t1}}>Android:</strong> menú ⋮ → "Instalar app"</div>
+              </div>
+            </div>
+            <button onClick={()=>setShowPWABanner(false)} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:16,padding:0,lineHeight:1}}>✕</button>
+          </div>}
+          {!hasBudget?<Card style={{textAlign:"center",padding:30,background:`linear-gradient(135deg,${C.card},${C.accent}08)`,borderColor:C.accent+"22"}}><div style={{fontSize:48,marginBottom:12}}>🎯</div><h3 style={{fontFamily:"'Sora',sans-serif",fontSize:20,fontWeight:800,color:C.t1,margin:"0 0 8px"}}>Configura tu primer presupuesto</h3><p style={{color:C.t2,fontSize:13,margin:"0 0 20px",lineHeight:1.5}}>Te guiamos paso a paso. Solo necesitas saber cuánto ganas y en qué gastas.</p><button onClick={()=>{setShowFirstBudget(true);setFbStep(0);setFbDraft({});}} style={{padding:"14px 28px",borderRadius:12,border:"none",background:C.accent,color:"#000",fontSize:15,fontWeight:700,cursor:"pointer"}}>Empezar →</button></Card>:<div>
           <div style={{display:"flex",gap:10,marginBottom:12}}><div style={{background:C.card,borderRadius:14,padding:14,border:`1px solid ${scoreColor}22`,textAlign:"center",minWidth:90}}><div style={{position:"relative",width:60,height:60,margin:"0 auto 6px"}}><svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" stroke={C.border} strokeWidth="4" fill="none"/><circle cx="30" cy="30" r="26" stroke={scoreColor} strokeWidth="4" fill="none" strokeDasharray={`${score*1.63} 163`} transform="rotate(-90 30 30)" strokeLinecap="round"/></svg><div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:18,fontWeight:800,color:scoreColor}}>{score}</div></div><div style={{fontSize:10,fontWeight:700,color:scoreColor}}>{scoreLabel}</div><div style={{fontSize:8,color:C.t3}}>Score financiero</div></div>
             <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}><div style={{background:C.card,borderRadius:10,padding:"8px 12px",border:`1px solid ${racha>=7?C.warning+"33":C.border}`,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:22}}>{racha>=30?"🏆":racha>=7?"🔥":racha>=1?"📅":"💤"}</span><div><div style={{fontSize:16,fontWeight:800,color:racha>=7?C.warning:C.t1}}>{racha} días</div><div style={{fontSize:9,color:C.t3}}>de racha</div></div></div>
               {!hasRegToday&&<button onClick={markNoSpend} style={{background:C.card,borderRadius:10,padding:"10px 12px",border:`2px dashed ${C.accent}33`,color:C.accent,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left"}}>✅ Hoy no gasté nada</button>}
