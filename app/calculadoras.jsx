@@ -1642,10 +1642,22 @@ function SimuladorPresupuesto({ mob }) {
 export default function Landing({ onGoPro }) {
   const [tab, setTab] = useState("presupuesto");
   const [mob, setMob] = useState(true);
+  const [precio, setPrecio] = useState("$4.99 USD/mes");
 
   useEffect(() => {
     const ch = () => setMob(window.innerWidth < 768);
     ch(); window.addEventListener("resize", ch); return () => window.removeEventListener("resize", ch);
+  }, []);
+
+  useEffect(() => {
+    fetch("https://ipapi.co/json/")
+      .then(r => r.json())
+      .then(data => {
+        if (data.country_code === "MX") setPrecio("$89 MXN/mes");
+        else if (data.country_code === "US") setPrecio("$7.99 USD/mes");
+        else setPrecio("$4.99 USD/mes");
+      })
+      .catch(() => setPrecio("$4.99 USD/mes"));
   }, []);
 
   const tools = [
@@ -1742,10 +1754,13 @@ export default function Landing({ onGoPro }) {
               ¿Quieres tomar el control total de tus finanzas?
             </h3>
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $4.99 USD/mes.
+              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro y alertas inteligentes. Desde {precio}.
             </p>
             <button onClick={onGoPro} style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              🚀 Comenzar ahora
+              🚀 Obtén tu suscripción mensual
+            </button>
+            <button onClick={onGoPro} style={{ display: "inline-block", padding: "10px 24px", borderRadius: 10, background: "transparent", border: `1px solid ${C.accent}44`, color: C.accent, fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 10 }}>
+              Ya tengo cuenta — Iniciar sesión →
             </button>
           </div>
         </div>
