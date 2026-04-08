@@ -1519,8 +1519,128 @@ function SimuladorInfonavit({ mob }) {
 }
 
 
+const SUBCATS_SIM = {
+  Ingresos:["Nómina","Negocio o Bono","Otro ingreso"],
+  Gastos_Fijos:["Renta","Luz","Agua","Teléfono / Internet","Gas","Streaming","Transporte / Gasolina","Alimentación","Personal de limpieza","Otros gastos fijos"],
+  Gastos_Variables:["Salidas / comidas fuera","Belleza / Ropa","Mascota","Regalos"],
+  Ahorro:["Ahorro","Inversión","Meta ahorro"],
+  Deuda:["Tarjeta de crédito","Crédito Personal","Hipoteca / Auto"],
+  Salud:["Consultas médicas","Medicinas","Seguro médico"],
+  Educacion:["Colegiaturas","Cursos / diplomados","Libros / apps"],
+  Entretenimiento:["Cine / eventos","Videojuegos","Viajes"],
+  Hogar:["Limpieza","Mejoras del hogar","Reparaciones"],
+  Otros:["Multas","Otro"],
+};
+
+const CATS_SIM = [
+  {key:"Ingresos",label:"Ingresos",icon:"💰",color:"#00E8B8"},
+  {key:"Gastos_Fijos",label:"Gastos Fijos",icon:"🏠",color:"#FF4D6A"},
+  {key:"Gastos_Variables",label:"Gastos Variables",icon:"🛒",color:"#FFB443"},
+  {key:"Ahorro",label:"Ahorro e Inversión",icon:"🐷",color:"#22D3EE"},
+  {key:"Deuda",label:"Deuda",icon:"💳",color:"#A78BFA"},
+  {key:"Salud",label:"Salud",icon:"🏥",color:"#F472B6"},
+  {key:"Educacion",label:"Educación",icon:"📚",color:"#5B9CF6"},
+  {key:"Entretenimiento",label:"Entretenimiento",icon:"🎬",color:"#FFB443"},
+  {key:"Hogar",label:"Hogar",icon:"🔧",color:"#8B9DC3"},
+  {key:"Otros",label:"Otros",icon:"📦",color:"#475569"},
+];
+
+function SimuladorPresupuesto({ mob }) {
+  const [vals, setVals] = useState({});
+  const [catAbierta, setCatAbierta] = useState("Ingresos");
+  const is = {width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:13,fontWeight:600,outline:"none",textAlign:"right"};
+
+  const setVal = (k,v) => setVals(p=>({...p,[k]:v}));
+  const totalCat = (catKey) => (SUBCATS_SIM[catKey]||[]).reduce((s,sub)=>s+(parseFloat(vals[`${catKey}__${sub}`])||0),0);
+  const totalIng = totalCat("Ingresos");
+  const totalEgr = CATS_SIM.filter(c=>c.key!=="Ingresos").reduce((s,c)=>s+totalCat(c.key),0);
+  const balance = totalIng - totalEgr;
+  const deficit = balance < 0;
+  const ajustado = balance >= 0 && totalIng > 0 && balance < totalIng * 0.1;
+  const colorSem = deficit ? C.danger : ajustado ? C.warning : C.accent;
+  const MESES_SIM = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const proyeccion = MESES_SIM.map((m,i) => ({ mes:m, acumulado: balance*(i+1) }));
+
+  return (
+    <div style={{animation:"fadeIn 0.3s"}}>
+      {(totalIng>0||totalEgr>0)&&<Card style={{marginBottom:16,background:deficit?C.danger+"15":ajustado?C.warning+"15":C.accent+"10",border:`1px solid ${colorSem}33`}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+          {[{l:"💰 Ingresos",v:totalIng,c:C.accent},{l:"💸 Egresos",v:totalEgr,c:C.danger},{l:deficit?"⚠️ Déficit":"✅ Sobrante",v:Math.abs(balance),c:colorSem}].map((x,i)=>(
+            <div key={i} style={{textAlign:"center",padding:"10px 4px",background:C.bg,borderRadius:10}}>
+              <div style={{fontSize:10,color:C.t3,marginBottom:3}}>{x.l}</div>
+              <div style={{fontSize:mob?15:18,fontWeight:800,color:x.c}}>{fmt(x.v)}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",fontSize:12,fontWeight:700,color:colorSem,padding:"6px 8px",background:C.bg,borderRadius:8}}>
+          {deficit?`Tu presupuesto tiene un déficit de ${fmt(Math.abs(balance))} — gastas más de lo que ganas`:ajustado?`Margen muy ajustado — solo te queda el ${Math.round((balance/totalIng)*100)}%`:`Presupuesto sano — te sobran ${fmt(balance)} al mes`}
+        </div>
+      </Card>}
+
+      <div style={{marginBottom:16}}>
+        {CATS_SIM.map(cat=>{
+          const total = totalCat(cat.key);
+          const open = catAbierta === cat.key;
+          return(
+            <div key={cat.key} style={{marginBottom:6,borderRadius:12,overflow:"hidden",border:`1px solid ${open?cat.color+"44":C.border}`}}>
+              <button onClick={()=>setCatAbierta(open?null:cat.key)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:open?cat.color+"12":C.card,border:"none",cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:18}}>{cat.icon}</span>
+                <span style={{fontSize:13,fontWeight:700,color:open?cat.color:C.t1,flex:1}}>{cat.label}</span>
+                {total>0&&<span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>}
+                <span style={{fontSize:10,color:C.t3}}>{open?"▲":"▼"}</span>
+              </button>
+              {open&&<div style={{background:C.bg,padding:"10px 14px"}}>
+                {(SUBCATS_SIM[cat.key]||[]).map(sub=>(
+                  <div key={sub} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <span style={{fontSize:11,color:C.t2,flex:1}}>{sub}</span>
+                    <input type="number" placeholder="$0" value={vals[`${cat.key}__${sub}`]||""} onChange={e=>setVal(`${cat.key}__${sub}`,e.target.value)} style={{...is,width:120}}/>
+                  </div>
+                ))}
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {totalIng>0&&<Card style={{marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:4}}>📈 Proyección anual</div>
+        <div style={{fontSize:12,color:C.t3,marginBottom:12}}>Si mantienes este presupuesto los 12 meses</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+          <div style={{background:C.bg,borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+            <div style={{fontSize:10,color:C.t3,marginBottom:2}}>Ahorro proyectado</div>
+            <div style={{fontSize:20,fontWeight:800,color:deficit?C.danger:C.accent}}>{fmt(balance*12)}</div>
+            <div style={{fontSize:10,color:C.t3}}>al año</div>
+          </div>
+          <div style={{background:C.bg,borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+            <div style={{fontSize:10,color:C.t3,marginBottom:2}}>Ingreso anual</div>
+            <div style={{fontSize:20,fontWeight:800,color:C.accent}}>{fmt(totalIng*12)}</div>
+            <div style={{fontSize:10,color:C.t3}}>al año</div>
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={160}>
+          <AreaChart data={proyeccion}>
+            <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
+            <XAxis dataKey="mes" stroke={C.t3} fontSize={10}/>
+            <YAxis stroke={C.t3} fontSize={10} tickFormatter={v=>fmt(v)}/>
+            <Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t1,fontSize:11}} formatter={v=>fmt(v)}/>
+            <Area type="monotone" dataKey="acumulado" stroke={deficit?C.danger:C.accent} fill={deficit?C.danger+"20":C.accent+"20"} strokeWidth={2} name="Acumulado"/>
+          </AreaChart>
+        </ResponsiveContainer>
+      </Card>}
+
+      <div style={{textAlign:"center",padding:"20px 16px",background:C.card,borderRadius:16,border:`1px solid ${C.accent}22`,marginBottom:8}}>
+        <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:6}}>¿Quieres saber si realmente lo estás logrando?</div>
+        <div style={{fontSize:12,color:C.t2,marginBottom:16}}>La App Pro mide tu presupuesto vs lo que realmente gastas, día a día.</div>
+        <a href="/suscribete" style={{display:"inline-block",padding:"12px 28px",borderRadius:12,background:C.accent,color:"#000",fontSize:14,fontWeight:800,textDecoration:"none"}}>
+          🚀 Obtén tu suscripción mensual →
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing({ onGoPro }) {
-  const [tab, setTab] = useState("hipoteca");
+  const [tab, setTab] = useState("presupuesto");
   const [mob, setMob] = useState(true);
 
   useEffect(() => {
@@ -1529,6 +1649,7 @@ export default function Landing({ onGoPro }) {
   }, []);
 
   const tools = [
+    { id: "presupuesto", icon: "🎯", label: "Presupuesto", sub: "¿Cómo te irá en el año?" },
     { id: "hipoteca", icon: "🏠", label: "Hipoteca / Auto", sub: "¿Cuánto pagarás realmente?" },
     { id: "libertad", icon: "🚀", label: "Libertad Financiera", sub: "El poder del interés compuesto" },
     { id: "tarjeta", icon: "💳", label: "Tarjeta de Crédito", sub: "El costo del pago mínimo" },
@@ -1595,6 +1716,7 @@ export default function Landing({ onGoPro }) {
 
         {/* CALCULATOR CONTENT */}
         <div style={{ animation: "fadeIn 0.3s ease" }}>
+          {tab === "presupuesto" && <SimuladorPresupuesto mob={mob} />}
           {tab === "hipoteca" && <SimuladorCredito mob={mob} />}
           {tab === "libertad" && <LibertadFinanciera mob={mob} />}
           {tab === "tarjeta" && <TarjetaCredito mob={mob} />}
@@ -1620,13 +1742,10 @@ export default function Landing({ onGoPro }) {
               ¿Quieres tomar el control total de tus finanzas?
             </h3>
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
-              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro y alertas inteligentes para tomar el control total de tu dinero.
+              Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro, alertas inteligentes y participa en sorteos de $1,000 USD. Desde $4.99 USD/mes.
             </p>
             <button onClick={onGoPro} style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              🚀 Obtén tu suscripción mensual
-            </button>
-            <button onClick={onGoPro} style={{ display: "inline-block", padding: "10px 24px", borderRadius: 10, background: "transparent", border: `1px solid ${C.accent}44`, color: C.accent, fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 10 }}>
-              Ya tengo cuenta — Iniciar sesión →
+              🚀 Comenzar ahora
             </button>
           </div>
         </div>
