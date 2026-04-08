@@ -172,6 +172,13 @@ export default function AppPro({ onLogout, onGoCalc }){
           <input type="text" value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Tu nombre" style={{width:"100%",boxSizing:"border-box",padding:"14px 16px",borderRadius:12,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:18,fontWeight:600,outline:"none",textAlign:"center"}} autoFocus/>
         </div>
         <button onClick={()=>nombre.trim()&&setOnboarded(true)} disabled={!nombre.trim()} style={{width:"100%",padding:16,borderRadius:12,border:"none",cursor:nombre.trim()?"pointer":"default",background:nombre.trim()?C.accent:C.border,color:nombre.trim()?"#000":C.t3,fontSize:16,fontWeight:700}}>Comenzar 🚀</button>
+        <div style={{marginTop:16,background:C.card,borderRadius:12,padding:"14px 16px",border:`1px solid ${C.border}`,textAlign:"left"}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:8}}>📲 Instala la app en tu celular</div>
+          <div style={{fontSize:11,color:C.t2,lineHeight:1.7}}>
+            <div>🍎 <strong style={{color:C.t1}}>iPhone:</strong> toca el botón compartir ↑ → "Añadir a pantalla de inicio"</div>
+            <div>🤖 <strong style={{color:C.t1}}>Android:</strong> toca el menú ⋮ → "Instalar app"</div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1132,6 +1139,13 @@ export default function AppPro({ onLogout, onGoCalc }){
           
           <Card><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:10}}>Resumen anual {año}</div>{[{l:"Ingresos",v:ingAño,c:C.accent},{l:"Gastos",v:egrAño,c:C.danger},{l:"Apartado",v:ahoAño,c:C.cyan},{l:"Ahorro acumulado",v:ahoAcumulado,c:C.purple}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<3?`1px solid ${C.border}11`:"none"}}><span style={{fontSize:12,color:C.t2}}>{r.l}</span><span style={{fontSize:12,fontWeight:700,color:r.c}}>{fmt(r.v)}</span></div>)}</Card>
           {onGoCalc&&<button onClick={onGoCalc} style={{width:"100%",padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t2,fontSize:13,cursor:"pointer",marginTop:12}}>🧮 Ir a simuladores gratuitos</button>}
+          <div style={{background:C.card,borderRadius:10,padding:"12px 14px",border:`1px solid ${C.border}`,marginTop:8}}>
+            <div style={{fontSize:11,fontWeight:700,color:C.accent,marginBottom:6}}>📲 Instala la app en tu celular</div>
+            <div style={{fontSize:10,color:C.t2,lineHeight:1.7}}>
+              <div>🍎 <strong style={{color:C.t1}}>iPhone:</strong> compartir ↑ → "Añadir a pantalla de inicio"</div>
+              <div>🤖 <strong style={{color:C.t1}}>Android:</strong> menú ⋮ → "Instalar app"</div>
+            </div>
+          </div>
           <a href="https://billing.stripe.com/p/login/4gM7sM04S3it0jydW17ok00" target="_blank" style={{display:"block",width:"100%",boxSizing:"border-box",padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t2,fontSize:13,cursor:"pointer",marginTop:8,textAlign:"center",textDecoration:"none"}}>⚙️ Gestionar suscripción</a>
           {onLogout&&<button onClick={onLogout} style={{width:"100%",padding:12,borderRadius:10,background:C.danger+"15",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:13,cursor:"pointer",marginTop:8}}>Cerrar sesión</button>}
         </div>}
