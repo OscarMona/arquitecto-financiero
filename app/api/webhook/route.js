@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -48,7 +48,7 @@ export async function POST(req) {
     const session = event.data.object;
     const email = session.customer_email;
     const nombre = session.metadata?.nombre || "";
-    const ref = session.metadata?.ref || ""; // ← capturamos el ref
+    const ref = session.metadata?.ref || "";
     const customerId = session.customer;
 
     try {
@@ -68,21 +68,16 @@ export async function POST(req) {
         email,
         nombre,
         suscripcionInicio: new Date().toISOString(),
-        ...(ref && { ref }), // ← solo si tiene ref
+        ...(ref && { ref }),
       }, { merge: true });
 
-      // Si tiene ref, actualizar contador del influencer
+      // Si tiene ref — usar FieldValue.increment para contador atómico
       if (ref) {
-        const refDoc = db.collection("referidos").doc(ref);
-        await refDoc.set({
+        await db.collection("referidos").doc(ref).set({
           nombre: ref,
-          totalUsuarios: 0,
+          totalUsuarios: FieldValue.increment(1), // ← atómico, nunca falla
           updatedAt: new Date().toISOString(),
         }, { merge: true });
-        await refDoc.update({
-          totalUsuarios: (await refDoc.get()).data()?.totalUsuarios + 1 || 1,
-          updatedAt: new Date().toISOString(),
-        });
       }
 
       await sendPasswordResetEmail(email);
