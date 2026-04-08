@@ -45,7 +45,7 @@ export default function Home() {
     check();
   }, [user]);
 
-  const C = { bg: "#050A14", accent: "#00E8B8", t2: "#8B9DC3", danger: "#FF4D6A" };
+  const C = { bg: "#050A14", card: "#0E1525", border: "#1A2540", accent: "#00E8B8", t1: "#F1F5F9", t2: "#8B9DC3", t3: "#475569", danger: "#FF4D6A" };
 
   if (loading || checkingSub) return (
     <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -74,7 +74,10 @@ export default function Home() {
           <a href="/suscribete" style={{ display: "block", padding: "14px 28px", borderRadius: 12, background: C.accent, color: "#000", fontSize: 15, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
             Activar por {precio} →
           </a>
-          <button onClick={async () => { await logout(); }} style={{ background: "none", border: "none", color: C.t2, fontSize: 12, cursor: "pointer" }}>
+          <a href="https://billing.stripe.com/p/login/4gM7sM04S3it0jydW17ok00" target="_blank" style={{ display: "block", padding: "12px 28px", borderRadius: 12, background: "transparent", border: `1px solid ${C.border}`, color: C.t2, fontSize: 14, fontWeight: 600, textDecoration: "none", marginBottom: 12 }}>
+            ⚙️ Gestionar suscripción existente
+          </a>
+          <button onClick={async () => { await logout(); }} style={{ background: "none", border: "none", color: C.t3, fontSize: 12, cursor: "pointer" }}>
             Cerrar sesión
           </button>
         </div>
