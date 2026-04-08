@@ -24,10 +24,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-    },
+    googleBot: { index: true, follow: true },
   },
   alternates: {
     canonical: "https://arquitecto-financiero.vercel.app",
@@ -44,8 +41,17 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <meta name="theme-color" content="#0B1120" />
+        <meta name="theme-color" content="#00E8B8" />
         <link rel="canonical" href="https://arquitecto-financiero.vercel.app" />
+
+        {/* PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="ArqFinanciero" />
+        <meta name="mobile-web-app-capable" content="yes" />
+
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-07S3M6XSXB" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
