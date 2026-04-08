@@ -1628,13 +1628,7 @@ function SimuladorPresupuesto({ mob }) {
         </ResponsiveContainer>
       </Card>}
 
-      <div style={{textAlign:"center",padding:"20px 16px",background:C.card,borderRadius:16,border:`1px solid ${C.accent}22`,marginBottom:8}}>
-        <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:6}}>¿Quieres saber si realmente lo estás logrando?</div>
-        <div style={{fontSize:12,color:C.t2,marginBottom:16}}>La App Pro mide tu presupuesto vs lo que realmente gastas, día a día.</div>
-        <a href="/suscribete" style={{display:"inline-block",padding:"12px 28px",borderRadius:12,background:C.accent,color:"#000",fontSize:14,fontWeight:800,textDecoration:"none"}}>
-          🚀 Obtén tu suscripción mensual →
-        </a>
-      </div>
+
     </div>
   );
 }
@@ -1756,10 +1750,10 @@ export default function Landing({ onGoPro }) {
             <p style={{ fontSize: 13, color: C.t2, margin: "0 0 16px", lineHeight: 1.5 }}>
               Arquitecto Financiero Pro — registra gastos por voz con IA, presupuesto contra real, score financiero, metas de ahorro y alertas inteligentes. Desde {precio}.
             </p>
-            <button onClick={onGoPro} style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            <a href="/suscribete" style={{ display: "inline-block", padding: "12px 28px", borderRadius: 10, background: C.accent, border: "none", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer", textDecoration: "none" }}>
               🚀 Obtén tu suscripción mensual
-            </button>
-            <button onClick={onGoPro} style={{ display: "inline-block", padding: "10px 24px", borderRadius: 10, background: "transparent", border: `1px solid ${C.accent}44`, color: C.accent, fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 10 }}>
+            </a>
+            <button onClick={onGoPro} style={{ display: "block", margin: "10px auto 0", padding: "10px 24px", borderRadius: 10, background: "transparent", border: `1px solid ${C.accent}44`, color: C.accent, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Ya tengo cuenta — Iniciar sesión →
             </button>
           </div>
