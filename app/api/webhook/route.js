@@ -22,10 +22,7 @@ async function sendPasswordResetEmail(email) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        requestType: "PASSWORD_RESET",
-        email,
-      }),
+      body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
     }
   );
   const data = await res.json();
@@ -51,6 +48,7 @@ export async function POST(req) {
     const session = event.data.object;
     const email = session.customer_email;
     const nombre = session.metadata?.nombre || "";
+    const ref = session.metadata?.ref || ""; // ← capturamos el ref
     const customerId = session.customer;
 
     try {
@@ -63,15 +61,30 @@ export async function POST(req) {
         uid = newUser.uid;
       }
 
+      // Guardar usuario con ref del influencer
       await db.collection("usuarios").doc(uid).set({
         suscripcionActiva: true,
         stripeCustomerId: customerId,
         email,
         nombre,
         suscripcionInicio: new Date().toISOString(),
+        ...(ref && { ref }), // ← solo si tiene ref
       }, { merge: true });
 
-      // Mandar email de restablecimiento de contraseña via Firebase REST API
+      // Si tiene ref, actualizar contador del influencer
+      if (ref) {
+        const refDoc = db.collection("referidos").doc(ref);
+        await refDoc.set({
+          nombre: ref,
+          totalUsuarios: 0,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+        await refDoc.update({
+          totalUsuarios: (await refDoc.get()).data()?.totalUsuarios + 1 || 1,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
       await sendPasswordResetEmail(email);
 
     } catch (err) {

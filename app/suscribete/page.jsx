@@ -9,8 +9,21 @@ export default function Suscribete() {
   const [pais, setPais] = useState("OTHER");
   const [precio, setPrecio] = useState("$4.99 USD");
   const [detectando, setDetectando] = useState(true);
+  const [ref, setRef] = useState("");
 
   useEffect(() => {
+    // Capturar ?ref= de la URL y guardarlo en cookie por 30 días
+    const params = new URLSearchParams(window.location.search);
+    const refParam = params.get("ref");
+    if (refParam) {
+      setRef(refParam);
+      document.cookie = `af_ref=${refParam};max-age=${30*24*60*60};path=/`;
+    } else {
+      // Buscar en cookie si ya tenía un ref previo
+      const cookie = document.cookie.split(";").find(c => c.trim().startsWith("af_ref="));
+      if (cookie) setRef(cookie.split("=")[1].trim());
+    }
+
     fetch("https://ipapi.co/json/")
       .then(r => r.json())
       .then(data => {
@@ -31,7 +44,7 @@ export default function Suscribete() {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, pais }),
+        body: JSON.stringify({ nombre, email, pais, ref }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
