@@ -199,7 +199,7 @@ export default function AppPro({ onLogout, onGoCalc }){
         <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none} input[type=number]{-moz-appearance:textfield}`}</style>
         <div style={{display:"flex",gap:4,marginBottom:20}}>{["Ingresos","Egresos","Programados"].map((s,i)=><div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=fbStep?C.accent:C.border}}/>)}</div>
 
-        {fbStep===0&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:20}}><span style={{fontSize:40}}>💰</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Cuánto ganas al mes?</h2><p style={{color:C.t2,fontSize:13,margin:0}}>Es tu primer presupuesto. Te guiamos paso a paso.</p><p style={{color:C.t3,fontSize:11,margin:"6px 0 0"}}>Si cometes errores, los puedes corregir después en Presupuesto.</p></div>
+        {fbStep===0&&<div style={{animation:"fadeIn 0.3s"}}><div style={{textAlign:"center",marginBottom:20}}><span style={{fontSize:40}}>💰</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Cuánto te falta recibir este mes?</h2><p style={{color:C.t2,fontSize:13,margin:0,lineHeight:1.5}}>No importa si el mes ya empezó — pon lo que todavía esperas recibir.</p><div style={{marginTop:12,padding:"12px 14px",borderRadius:12,background:`${C.accent}10`,border:`1px solid ${C.accent}25`,textAlign:"left"}}><div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>📈 Tu primer presupuesto es un punto de partida</div><div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Nadie lo clava a la primera — y está bien. Cada mes vas a entenderte mejor y ajustarlo. <span style={{color:C.t1,fontWeight:600}}>Eso ES el proceso.</span> Este mes practica, el siguiente ya mides limpio.</div></div></div>
 
           <div style={{background:C.card,borderRadius:12,padding:14,border:`1px solid ${C.accent}33`,marginBottom:16}}>
             <div style={{fontSize:12,fontWeight:700,color:C.accent,marginBottom:4}}>📊 ¿Cómo arrancas hoy?</div>
@@ -270,7 +270,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             </div>}
           </div>
 
-          <div style={{fontSize:11,fontWeight:700,color:C.t2,marginBottom:8}}>Ingresos mensuales</div>
+          <div style={{fontSize:11,fontWeight:700,color:C.t2,marginBottom:8}}>💰 Lo que te falta recibir este mes</div>
           {allSubsWithExtras("Ingresos").map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:12,color:isExtra?C.accent:C.t2,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbDraft[key]||""} onChange={e=>setFb(key,e.target.value)} style={{...is,width:140,color:C.accent}}/></div>)}
           {addingTo==="Ingresos"?<div style={{display:"flex",gap:6,marginTop:6}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre (ej: Freelance)" style={{flex:1,padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.accent}44`,color:C.t1,fontSize:12,outline:"none"}} autoFocus/><button onClick={()=>addExtra("Ingresos")} style={{padding:"8px 12px",borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"8px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>✕</button></div>:<button onClick={()=>setAddingTo("Ingresos")} style={{width:"100%",padding:8,borderRadius:8,border:`1px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:11,cursor:"pointer",marginTop:6}}>+ Agregar otro ingreso</button>}
           <div style={{display:"flex",justifyContent:"space-between",marginTop:16,padding:"12px 0",borderTop:`1px solid ${C.border}`}}><span style={{fontSize:13,color:C.t3}}>Total ingresos</span><span style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt(tI)}</span></div>
@@ -278,7 +278,7 @@ export default function AppPro({ onLogout, onGoCalc }){
         </div>}
 
         {fbStep===1&&<div style={{animation:"fadeIn 0.3s"}}>
-          <div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📋</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿En qué gastas al mes?</h2><p style={{color:C.t2,fontSize:12}}>Pon lo que sepas. Lo que no, déjalo en cero.</p></div>
+          <div style={{textAlign:"center",marginBottom:16}}><span style={{fontSize:40}}>📋</span><h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Qué gastos te faltan por pagar?</h2><p style={{color:C.t2,fontSize:12}}>Lo que ya pagaste este mes no cuenta — solo lo que viene.</p></div>
 
           {/* RESUMEN ARRIBA */}
           <div style={{background:C.card,borderRadius:12,padding:12,border:`1px solid ${C.border}`,marginBottom:14}}>
@@ -300,8 +300,8 @@ export default function AppPro({ onLogout, onGoCalc }){
           {/* FRASE MOTIVACIONAL */}
           {tE>0&&<div style={{margin:"12px 0",padding:"14px 16px",borderRadius:12,textAlign:"center",background:(tI-tE)>=0?`${C.accent}12`:`${C.danger}12`,border:`1px solid ${(tI-tE)>=0?C.accent:C.danger}33`}}>
             {(tI-tE)>=0
-              ?<><div style={{fontSize:22,marginBottom:4}}>🚀</div><div style={{fontSize:13,color:C.t2,marginBottom:2}}>Con este presupuesto ahorrarás</div><div style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt((tI-tE)*12)} al año</div><div style={{fontSize:11,color:C.t3,marginTop:3}}>{fmt(tI-tE)} cada mes disponibles</div></>
-              :<><div style={{fontSize:22,marginBottom:4}}>⚠️</div><div style={{fontSize:13,color:C.danger,fontWeight:700}}>Tus egresos superan tus ingresos</div><div style={{fontSize:20,fontWeight:800,color:C.danger}}>{fmt(tI-tE)} al mes</div><div style={{fontSize:11,color:C.t3,marginTop:3}}>Revisa tus gastos antes de continuar</div></>
+              ?<><div style={{fontSize:22,marginBottom:4}}>🚀</div><div style={{fontSize:13,color:C.t2,marginBottom:2}}>Con este presupuesto podrías liberar</div><div style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt(tI-tE)} este mes</div><div style={{fontSize:11,color:C.t3,marginTop:6,lineHeight:1.5}}>Este mes es práctica — el siguiente ya arrancas limpio y verás el verdadero poder del presupuesto 💪</div></>
+              :<><div style={{fontSize:22,marginBottom:4}}>⚠️</div><div style={{fontSize:13,color:C.danger,fontWeight:700}}>Tus egresos superan tus ingresos</div><div style={{fontSize:20,fontWeight:800,color:C.danger}}>{fmt(tI-tE)} al mes</div><div style={{fontSize:11,color:C.t3,marginTop:6,lineHeight:1.5}}>No pasa nada — esto es exactamente lo que el presupuesto te ayuda a resolver. Ajusta o continúa y ve cómo te va este mes.</div></>
             }
           </div>}
 
@@ -332,7 +332,8 @@ export default function AppPro({ onLogout, onGoCalc }){
                   });
                 }} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}
           <ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>
-          <div style={{display:"flex",gap:8,marginTop:16}}><button onClick={()=>setFbStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>{saveBudgetPermanent(fbDraft);setShowFirstBudget(false);setTab("resumen");showToast("🎉 ¡Tu presupuesto está listo!");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>✅ Guardar presupuesto</button></div>
+          <div style={{margin:"16px 0",padding:"14px 16px",borderRadius:12,background:`${C.accent}10`,border:`1px solid ${C.accent}25`}}><div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>🎯 Listo para empezar</div><div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Tu presupuesto queda guardado de este mes en adelante. El mes que entra ya arrancas limpio — y lo puedes afinar cuando quieras desde la pestaña Presupuesto.</div></div>
+          <div style={{display:"flex",gap:8,marginTop:8}}><button onClick={()=>setFbStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>{saveBudgetPermanent(fbDraft);setShowFirstBudget(false);setTab("resumen");showToast("🎉 ¡Tu presupuesto está listo!");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>✅ ¡Arrancar!</button></div>
         </div>}
       </div>
     );
