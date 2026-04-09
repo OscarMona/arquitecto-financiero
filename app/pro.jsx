@@ -65,6 +65,11 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [showFirstBudget,setShowFirstBudget]=useState(false);
   const [fbStep,setFbStep]=useState(0);
   const [fbDraft,setFbDraft]=useState({});
+  const [showFullBudget,setShowFullBudget]=useState(false);
+  const [fbFullStep,setFbFullStep]=useState(0);
+  const [fbFullDraft,setFbFullDraft]=useState({});
+  const [mesOnboarding,setMesOnboarding]=useState("");
+  const [añoOnboarding,setAñoOnboarding]=useState(0);
   const [addingTo,setAddingTo]=useState(null);
   const [extraName,setExtraName]=useState("");
   const [loaded,setLoaded]=useState(false);
@@ -95,6 +100,8 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.pwaBannerCerrado)setPwaBannerCerrado(data.pwaBannerCerrado);
         if(data.programadosPagados)setProgramadosPagados(data.programadosPagados);
         if(data.inversiones)setInversiones(data.inversiones);
+        if(data.mesOnboarding)setMesOnboarding(data.mesOnboarding);
+        if(data.añoOnboarding)setAñoOnboarding(data.añoOnboarding);
       }
       setLoaded(true);
     };
@@ -105,7 +112,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones,pwaBannerCerrado});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones,pwaBannerCerrado,mesOnboarding,añoOnboarding});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,inversiones,pwaBannerCerrado,user,loaded]);
@@ -113,6 +120,10 @@ export default function AppPro({ onLogout, onGoCalc }){
   const hasBudget=Object.keys(pres).length>0&&Object.values(pres).some(p=>Object.values(p).some(v=>parseFloat(v)>0));
 
   const saveBudgetPermanent=draft=>{const budget={};Object.entries(draft).forEach(([k,v])=>{const n=parseFloat(v)||0;if(n>0){budget[k]=n;const cat=k.split("__")[0];budget[cat]=(budget[cat]||0)+n;}});setPres(prev=>{const up={...prev};const ci=ALL_PERIODS.findIndex(p=>p.mes===mes&&p.año===año);if(ci>=0)for(let i=ci;i<ALL_PERIODS.length;i++)up[ALL_PERIODS[i].key]={...budget};return up;});};
+
+  const saveBudgetOnlyCurrentMonth=draft=>{const budget={};Object.entries(draft).forEach(([k,v])=>{const n=parseFloat(v)||0;if(n>0){budget[k]=n;const cat=k.split("__")[0];budget[cat]=(budget[cat]||0)+n;}});setPres(prev=>({...prev,[curPK]:{...budget}}));};
+
+  const saveBudgetFromNextMonth=draft=>{const budget={};Object.entries(draft).forEach(([k,v])=>{const n=parseFloat(v)||0;if(n>0){budget[k]=n;const cat=k.split("__")[0];budget[cat]=(budget[cat]||0)+n;}});const nextIdx=ALL_PERIODS.findIndex(p=>p.mes===mes&&p.año===año)+1;setPres(prev=>{const up={...prev};for(let i=nextIdx;i<ALL_PERIODS.length;i++)up[ALL_PERIODS[i].key]={...budget};return up;});};
 
   const applyForward=(itemKey,newValue)=>{const num=parseFloat(newValue)||0;const ci=ALL_PERIODS.findIndex(p=>p.mes===mes&&p.año===año);if(ci<0)return;setPres(prev=>{const up={...prev};for(let i=ci;i<ALL_PERIODS.length;i++){const period=ALL_PERIODS[i];const ex={...(up[period.key]||{})};if(num>0)ex[itemKey]=num;else delete ex[itemKey];const cat=itemKey.split("__")[0];const ct=Object.entries(ex).filter(([k])=>k.startsWith(`${cat}__`)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);if(ct>0)ex[cat]=ct;else delete ex[cat];up[period.key]=ex;}return up;});showToast("✅ Actualizado de este mes en adelante");};
 
@@ -332,8 +343,91 @@ export default function AppPro({ onLogout, onGoCalc }){
                   });
                 }} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}
           <ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>
-          <div style={{margin:"16px 0",padding:"14px 16px",borderRadius:12,background:`${C.accent}10`,border:`1px solid ${C.accent}25`}}><div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>🎯 Listo para empezar</div><div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Tu presupuesto queda guardado de este mes en adelante. El mes que entra ya arrancas limpio — y lo puedes afinar cuando quieras desde la pestaña Presupuesto.</div></div>
-          <div style={{display:"flex",gap:8,marginTop:8}}><button onClick={()=>setFbStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>{saveBudgetPermanent(fbDraft);setShowFirstBudget(false);setTab("resumen");showToast("🎉 ¡Tu presupuesto está listo!");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>✅ ¡Arrancar!</button></div>
+          <div style={{margin:"16px 0",padding:"14px 16px",borderRadius:12,background:`${C.accent}10`,border:`1px solid ${C.accent}25`}}><div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>🎯 Casi listo</div><div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Este presupuesto se guarda solo para este mes. Ahora te pedimos que proyectes un mes normal completo — eso es lo que alimenta tu flujo de caja.</div></div>
+          <div style={{display:"flex",gap:8,marginTop:8}}><button onClick={()=>setFbStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>{saveBudgetOnlyCurrentMonth(fbDraft);const mo=MESES[new Date().getMonth()];const ao=new Date().getFullYear();setMesOnboarding(mo);setAñoOnboarding(ao);setFbFullDraft({});setFbFullStep(0);setShowFirstBudget(false);setShowFullBudget(true);showToast("✅ Presupuesto de cierre guardado");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.accent,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>Siguiente → Mes completo</button></div>
+        </div>}
+      </div>
+    );
+  }
+
+  /* WIZARD 2 — MES COMPLETO */
+  if(showFullBudget){
+    const mesNext=MESES[(MESES.indexOf(mes)+1)%12];
+    const setFf=(k,v)=>setFbFullDraft(p=>({...p,[k]:v}));
+    const ffT=prefix=>Object.entries(fbFullDraft).filter(([k])=>k.startsWith(prefix)).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+    const tI2=ffT("Ingresos__");
+    const tE2=Object.entries(fbFullDraft).filter(([k])=>k.includes("__")&&!k.startsWith("Ingresos__")&&!k.startsWith("Inversion__")).reduce((s,[,v])=>s+(parseFloat(v)||0),0);
+    const is2={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:14,fontWeight:600,outline:"none",textAlign:"right"};
+    const allSubsFull=(catKey)=>{const base=(SUBCATS[catKey]||[]).map(s=>({key:`${catKey}__${s}`,name:s,isExtra:false}));const extras=Object.keys(fbFullDraft).filter(k=>k.startsWith(`${catKey}__`)&&!base.find(b=>b.key===k)).map(k=>({key:k,name:k.split("__")[1],isExtra:true}));return[...base,...extras];};
+    const addExtraFull=(catKey)=>{if(!extraName.trim())return;const key=`${catKey}__${extraName.trim()}`;setFf(key,"");setExtraName("");setAddingTo(null);};
+    return(
+      <div style={{background:C.bg,minHeight:"100vh",color:C.t1,fontFamily:"'DM Sans',system-ui,sans-serif",padding:"20px 16px 100px"}}>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet"/>
+        <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none} input[type=number]{-moz-appearance:textfield}`}</style>
+
+        {/* Indicador de progreso */}
+        <div style={{display:"flex",gap:4,marginBottom:8}}>{["Ingresos","Egresos","Programados"].map((s,i)=><div key={i} style={{flex:1,height:4,borderRadius:2,background:i<=fbFullStep?C.cyan:C.border}}/>)}</div>
+        <div style={{textAlign:"center",marginBottom:16,padding:"8px 12px",borderRadius:10,background:`${C.cyan}12`,border:`1px solid ${C.cyan}25`}}>
+          <span style={{fontSize:11,color:C.cyan,fontWeight:700}}>📅 Presupuesto mensual completo — aplica desde {mesNext} en adelante</span>
+        </div>
+
+        {fbFullStep===0&&<div style={{animation:"fadeIn 0.3s"}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <span style={{fontSize:40}}>🗓️</span>
+            <h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Cuánto ganas en un mes normal?</h2>
+            <p style={{color:C.t2,fontSize:13,margin:0,lineHeight:1.5}}>Aquí sí va tu ingreso completo — nómina, negocio, lo que sea que recibes cada mes.</p>
+            <div style={{marginTop:12,padding:"12px 14px",borderRadius:12,background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`,textAlign:"left"}}>
+              <div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Este presupuesto se aplica desde <span style={{color:C.cyan,fontWeight:700}}>{mesNext}</span> en adelante y alimenta tu <span style={{color:C.t1,fontWeight:600}}>flujo de caja y proyección</span>. No tiene que ser perfecto — lo ajustas cuando quieras.</div>
+            </div>
+          </div>
+          <div style={{fontSize:11,fontWeight:700,color:C.t2,marginBottom:8}}>💰 Ingresos mensuales</div>
+          {allSubsFull("Ingresos").map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:12,color:isExtra?C.cyan:C.t2,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbFullDraft[key]||""} onChange={e=>setFf(key,e.target.value)} style={{...is2,width:140,color:C.cyan}}/></div>)}
+          {addingTo==="Ingresos_full"?<div style={{display:"flex",gap:6,marginTop:6}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre (ej: Freelance)" style={{flex:1,padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.cyan}44`,color:C.t1,fontSize:12,outline:"none"}} autoFocus/><button onClick={()=>addExtraFull("Ingresos")} style={{padding:"8px 12px",borderRadius:8,border:"none",background:C.cyan,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"8px 10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>✕</button></div>:<button onClick={()=>setAddingTo("Ingresos_full")} style={{width:"100%",padding:8,borderRadius:8,border:`1px dashed ${C.cyan}33`,background:"transparent",color:C.cyan,fontSize:11,cursor:"pointer",marginTop:6}}>+ Agregar otro ingreso</button>}
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:16,padding:"12px 0",borderTop:`1px solid ${C.border}`}}><span style={{fontSize:13,color:C.t3}}>Total ingresos</span><span style={{fontSize:22,fontWeight:800,color:C.cyan}}>{fmt(tI2)}</span></div>
+          <button onClick={()=>setFbFullStep(1)} disabled={tI2<=0} style={{width:"100%",padding:14,borderRadius:12,border:"none",cursor:tI2>0?"pointer":"default",background:tI2>0?C.cyan:C.border,color:tI2>0?"#000":C.t3,fontSize:15,fontWeight:700,marginTop:8}}>Continuar a Egresos →</button>
+        </div>}
+
+        {fbFullStep===1&&<div style={{animation:"fadeIn 0.3s"}}>
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <span style={{fontSize:40}}>📋</span>
+            <h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿En qué gastas un mes completo?</h2>
+            <p style={{color:C.t2,fontSize:12}}>Todos tus gastos normales — renta, súper, servicios, lo que sea.</p>
+          </div>
+          <div style={{background:C.card,borderRadius:12,padding:12,border:`1px solid ${C.border}`,marginBottom:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+              <div style={{textAlign:"center",padding:"8px 4px",background:C.accentDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Ingresos</div><div style={{fontSize:15,fontWeight:700,color:C.cyan}}>{fmt(tI2)}</div></div>
+              <div style={{textAlign:"center",padding:"8px 4px",background:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Egresos</div><div style={{fontSize:15,fontWeight:700,color:C.danger}}>{fmt(tE2)}</div></div>
+              <div style={{textAlign:"center",padding:"8px 4px",background:(tI2-tE2)>=0?C.accentDim:C.dangerDim,borderRadius:8}}><div style={{fontSize:9,color:C.t3,marginBottom:2}}>Te sobra</div><div style={{fontSize:15,fontWeight:700,color:(tI2-tE2)>=0?C.accent:C.danger}}>{fmt(tI2-tE2)}</div></div>
+            </div>
+          </div>
+          <div style={{maxHeight:380,overflowY:"auto"}}>{CATEGORIAS.filter(c=>c.key!=="Ingresos").map(cat=>{const subs=allSubsFull(cat.key);const total=subs.reduce((s,sub)=>s+(parseFloat(fbFullDraft[sub.key])||0),0);return(<div key={cat.key} style={{marginBottom:10,background:C.card,borderRadius:10,padding:12,borderLeft:`3px solid ${cat.color}`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:total>0?6:0}}><span style={{fontSize:12,fontWeight:700,color:cat.color}}>{cat.icon} {cat.label}</span>{total>0&&<span style={{fontSize:12,fontWeight:700,color:cat.color}}>{fmt(total)}</span>}</div>{subs.map(({key,name,isExtra})=><div key={key} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}><span style={{fontSize:10,color:isExtra?cat.color:C.t3,flex:1}}>{name}{isExtra?" ✨":""}</span><input type="number" placeholder="$0" value={fbFullDraft[key]||""} onChange={e=>setFf(key,e.target.value)} style={{...is2,width:110,fontSize:12}}/></div>)}
+            {addingTo===cat.key+"_full"?<div style={{display:"flex",gap:6,marginTop:4}}><input type="text" value={extraName} onChange={e=>setExtraName(e.target.value)} placeholder="Nombre del gasto" style={{flex:1,padding:"6px 8px",borderRadius:6,background:C.bg,border:`1px solid ${cat.color}44`,color:C.t1,fontSize:11,outline:"none"}} autoFocus/><button onClick={()=>addExtraFull(cat.key)} style={{padding:"6px 10px",borderRadius:6,border:"none",background:cat.color,color:"#000",fontSize:10,fontWeight:700,cursor:"pointer"}}>+</button><button onClick={()=>{setAddingTo(null);setExtraName("");}} style={{padding:"6px 8px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:10,cursor:"pointer"}}>✕</button></div>:<button onClick={()=>setAddingTo(cat.key+"_full")} style={{width:"100%",padding:6,borderRadius:6,border:`1px dashed ${cat.color}33`,background:"transparent",color:cat.color,fontSize:10,cursor:"pointer",marginTop:4}}>+ Agregar otro</button>}
+          </div>);})}</div>
+          {tE2>0&&<div style={{margin:"12px 0",padding:"14px 16px",borderRadius:12,textAlign:"center",background:(tI2-tE2)>=0?`${C.accent}12`:`${C.danger}12`,border:`1px solid ${(tI2-tE2)>=0?C.accent:C.danger}33`}}>
+            {(tI2-tE2)>=0
+              ?<><div style={{fontSize:22,marginBottom:4}}>🚀</div><div style={{fontSize:13,color:C.t2,marginBottom:2}}>Con este presupuesto ahorrarás</div><div style={{fontSize:22,fontWeight:800,color:C.accent}}>{fmt((tI2-tE2)*12)} al año</div><div style={{fontSize:11,color:C.t3,marginTop:3}}>{fmt(tI2-tE2)} libres cada mes</div></>
+              :<><div style={{fontSize:22,marginBottom:4}}>⚠️</div><div style={{fontSize:13,color:C.danger,fontWeight:700}}>Tus egresos superan tus ingresos</div><div style={{fontSize:20,fontWeight:800,color:C.danger}}>{fmt(tI2-tE2)} al mes</div><div style={{fontSize:11,color:C.t3,marginTop:6,lineHeight:1.5}}>No pasa nada — eso es exactamente lo que vamos a resolver juntos. Continúa y ajusta cuando quieras.</div></>
+            }
+          </div>}
+          <div style={{display:"flex",gap:8,marginTop:8}}><button onClick={()=>setFbFullStep(0)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button><button onClick={()=>setFbFullStep(2)} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.cyan,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>Gastos programados →</button></div>
+        </div>}
+
+        {fbFullStep===2&&<div style={{animation:"fadeIn 0.3s"}}>
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <span style={{fontSize:40}}>📅</span>
+            <h2 style={{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,color:C.t1,margin:"8px 0 4px"}}>¿Pagos grandes anuales?</h2>
+            <p style={{color:C.t2,fontSize:12}}>Anualidad, seguro, predial... Si no tienes, sáltalo.</p>
+          </div>
+          {programados.map(p=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:C.card,borderRadius:10,marginBottom:6,border:`1px solid ${C.border}`}}><span style={{fontSize:16}}>📅</span><div style={{flex:1}}><div style={{fontSize:12,color:C.t1,fontWeight:600}}>{p.nombre}</div><div style={{fontSize:10,color:C.t3}}>{MESES[p.mes]}{p.repite?" · Anual":""}</div></div><span style={{fontSize:13,fontWeight:700,color:C.warning}}>{fmt(p.monto)}</span><button onClick={()=>setProgramados(prev=>prev.filter(x=>x.id!==p.id))} style={{background:"none",border:"none",color:C.t3,cursor:"pointer"}}>✕</button></div>)}
+          <ScheduledForm onAdd={(n,m,mp,r)=>setProgramados(prev=>[...prev,{id:Date.now(),nombre:n,monto:parseFloat(m),mes:mp,repite:r}])}/>
+          <div style={{margin:"16px 0",padding:"14px 16px",borderRadius:12,background:`${C.cyan}10`,border:`1px solid ${C.cyan}25`}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.cyan,marginBottom:4}}>🎉 ¡Todo listo!</div>
+            <div style={{fontSize:12,color:C.t2,lineHeight:1.6}}>Tu presupuesto mensual completo queda guardado desde <strong style={{color:C.t1}}>{mesNext}</strong> en adelante. Ya puedes ver tu flujo de caja y proyección con tus números reales.</div>
+          </div>
+          <div style={{display:"flex",gap:8,marginTop:8}}>
+            <button onClick={()=>setFbFullStep(1)} style={{flex:1,padding:12,borderRadius:10,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:13}}>← Atrás</button>
+            <button onClick={()=>{saveBudgetFromNextMonth(fbFullDraft);setShowFullBudget(false);setOnboarded(true);setTab("resumen");showToast("🎉 ¡Tu presupuesto está listo!");}} style={{flex:2,padding:12,borderRadius:10,border:"none",background:C.cyan,color:"#000",cursor:"pointer",fontSize:14,fontWeight:700}}>✅ ¡Ver mi flujo de caja!</button>
+          </div>
         </div>}
       </div>
     );
@@ -435,6 +529,21 @@ export default function AppPro({ onLogout, onGoCalc }){
       <div style={{padding:"0 16px",animation:"fadeIn 0.3s"}}>
 
         {tab==="resumen"&&<div>
+          {mesOnboarding&&añoOnboarding&&mes===mesOnboarding&&año===añoOnboarding&&<div style={{margin:"0 0 12px",padding:"14px 16px",background:`${C.warning}12`,borderRadius:12,border:`1px solid ${C.warning}33`,display:"flex",alignItems:"flex-start",gap:10}}>
+            <span style={{fontSize:22}}>🎯</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.warning,marginBottom:4}}>Este mes es tu presupuesto de práctica</div>
+              <div style={{fontSize:11,color:C.t2,lineHeight:1.6}}>Registra todo lo que puedas — ingresos, gastos, lo que sea. Desde <strong style={{color:C.t1}}>{MESES[(MESES.indexOf(mesOnboarding)+1)%12]}</strong> ya mides con tu presupuesto mensual completo 💪</div>
+            </div>
+          </div>}
+          {mesOnboarding&&añoOnboarding&&(año>añoOnboarding||(año===añoOnboarding&&MESES.indexOf(mes)===MESES.indexOf(mesOnboarding)+1))&&!hasBudget&&<div style={{margin:"0 0 12px",padding:"14px 16px",background:`${C.accent}12`,borderRadius:12,border:`1px solid ${C.accent}33`,display:"flex",alignItems:"flex-start",gap:10}}>
+            <span style={{fontSize:22}}>🎉</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.accent,marginBottom:4}}>¡Arranca tu primer mes completo!</div>
+              <div style={{fontSize:11,color:C.t2,lineHeight:1.6,marginBottom:8}}>Ya tienes tu presupuesto base listo. Si quieres afinar algo para este mes, entra a Presupuesto y ajusta — los cambios se propagan hacia adelante.</div>
+              <button onClick={()=>setTab("presupuesto")} style={{padding:"6px 14px",borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:11,fontWeight:700,cursor:"pointer"}}>Revisar presupuesto →</button>
+            </div>
+          </div>}
           {!pwaBannerCerrado&&<div style={{margin:"0 0 12px",padding:"14px 16px",background:C.accent+"12",borderRadius:12,border:`1px solid ${C.accent}33`,display:"flex",alignItems:"flex-start",gap:12}}>
             <span style={{fontSize:24}}>📲</span>
             <div style={{flex:1}}>
