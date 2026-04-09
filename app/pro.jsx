@@ -59,9 +59,10 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [prorateosRechazados,setProrateosRechazados]=useState({});
   const [programadosPagados,setProgramadosPagados]=useState({});
   const [saldoInicial,setSaldoInicial]=useState(0);
-  const [deudaTarjetaInicial,setDeudaTarjetaInicial]=useState(0);
-  const [diaCorte,setDiaCorte]=useState(0);
-  const [diaPago,setDiaPago]=useState(0);
+  const [tarjetas,setTarjetas]=useState([]);
+  const [tarjetaSelReg,setTarjetaSelReg]=useState(null);
+  const [showTarjetaForm,setShowTarjetaForm]=useState(false);
+  const [editingTarjeta,setEditingTarjeta]=useState(null);
   const [showTipFecha,setShowTipFecha]=useState(false);
   const [showFirstBudget,setShowFirstBudget]=useState(false);
   const [fbStep,setFbStep]=useState(0);
@@ -94,9 +95,12 @@ export default function AppPro({ onLogout, onGoCalc }){
         if(data.metas)setMetas(data.metas);
         if(data.onboarded)setOnboarded(data.onboarded);
         if(data.saldoInicial)setSaldoInicial(data.saldoInicial);
-        if(data.deudaTarjetaInicial)setDeudaTarjetaInicial(data.deudaTarjetaInicial);
-        if(data.diaCorte)setDiaCorte(data.diaCorte);
-        if(data.diaPago)setDiaPago(data.diaPago);
+        // Migración retrocompatible: si había una sola tarjeta en formato viejo, convertir a array
+        if(data.tarjetas){
+          setTarjetas(data.tarjetas);
+        } else if(data.deudaTarjetaInicial||data.diaCorte||data.diaPago){
+          setTarjetas([{id:"tdc_legacy",nombre:"Mi tarjeta",deudaInicial:data.deudaTarjetaInicial||0,diaCorte:data.diaCorte||0,diaPago:data.diaPago||0}]);
+        }
         if(data.prorateosRechazados)setProrateosRechazados(data.prorateosRechazados);
         if(data.pwaBannerCerrado)setPwaBannerCerrado(data.pwaBannerCerrado);
         if(data.programadosPagados)setProgramadosPagados(data.programadosPagados);
@@ -113,7 +117,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   useEffect(()=>{
     if(!user||!loaded)return;
     const timer=setTimeout(()=>{
-      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,deudaTarjetaInicial,diaCorte,diaPago,prorateosRechazados,programadosPagados,inversiones,pwaBannerCerrado,mesOnboarding,añoOnboarding});
+      saveUserData(user.uid,{nombre,gastos,pres,programados,metas,onboarded,saldoInicial,tarjetas,prorateosRechazados,programadosPagados,inversiones,pwaBannerCerrado,mesOnboarding,añoOnboarding});
     },1000);
     return()=>clearTimeout(timer);
   },[nombre,gastos,pres,programados,metas,onboarded,inversiones,pwaBannerCerrado,user,loaded]);
@@ -150,6 +154,7 @@ export default function AppPro({ onLogout, onGoCalc }){
   const tarjetaMes=useMemo(()=>gMes.filter(g=>g.metodo==="tarjeta"&&g.sub!=="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
   const efectivoMes=useMemo(()=>gMes.filter(g=>g.metodo==="efectivo"&&isGasto(g.cat)).reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
   const pagosTarjetaMes=useMemo(()=>gMes.filter(g=>g.sub==="Pago de tarjeta").reduce((s,g)=>s+Math.abs(g.monto),0),[gMes]);
+  const deudaTotalInicial=useMemo(()=>tarjetas.reduce((s,t)=>s+(t.deudaInicial||0),0),[tarjetas]);
   // Inversiones activas restan del disponible (sin doble resta porque no van a Ahorro)
   const totalInvertidoActivo=inversiones.reduce((s,i)=>s+i.monto,0);
   const hoyInv=new Date();
@@ -224,17 +229,17 @@ export default function AppPro({ onLogout, onGoCalc }){
 
             <div style={{marginBottom:10}}>
               <div style={{fontSize:10,color:C.t3,marginBottom:3}}>💳 Deuda actual en tarjeta de crédito</div>
-              <input type="number" placeholder="$0" value={deudaTarjetaInicial||""} onChange={e=>setDeudaTarjetaInicial(parseFloat(e.target.value)||0)} style={{...is,width:"100%",color:C.purple}}/>
+              <input type="number" placeholder="$0" value={tarjetas[0]?.deudaInicial||""} onChange={e=>{const v=parseFloat(e.target.value)||0;setTarjetas(prev=>prev.length>0?[{...prev[0],deudaInicial:v},...prev.slice(1)]:[{id:"tdc_1",nombre:"Mi tarjeta",deudaInicial:v,diaCorte:0,diaPago:0}]);}} style={{...is,width:"100%",color:C.purple}}/>
             </div>
 
-            {deudaTarjetaInicial>0&&<>
+            {(tarjetas[0]?.deudaInicial||0)>0&&<>
               <div style={{marginBottom:10}}>
                 <div style={{fontSize:10,color:C.t3,marginBottom:6}}>📅 Día de corte <span style={{color:C.t3}}>(cuando el banco congela el saldo)</span></div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                   {[1,5,10,15,17,20,25,28].map(d=>(
-                    <button key={d} onClick={()=>setDiaCorte(d)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${diaCorte===d?C.purple:C.border}`,background:diaCorte===d?C.purple+"22":"transparent",color:diaCorte===d?C.purple:C.t3,fontSize:11,fontWeight:diaCorte===d?700:400,cursor:"pointer"}}>día {d}</button>
+                    <button key={d} onClick={()=>setTarjetas(prev=>[{...prev[0],diaCorte:d},...prev.slice(1)])} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${tarjetas[0]?.diaCorte===d?C.purple:C.border}`,background:tarjetas[0]?.diaCorte===d?C.purple+"22":"transparent",color:tarjetas[0]?.diaCorte===d?C.purple:C.t3,fontSize:11,fontWeight:tarjetas[0]?.diaCorte===d?700:400,cursor:"pointer"}}>día {d}</button>
                   ))}
-                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(diaCorte)&&diaCorte>0?diaCorte:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setDiaCorte(v);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
+                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(tarjetas[0]?.diaCorte||0)&&(tarjetas[0]?.diaCorte||0)>0?tarjetas[0].diaCorte:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setTarjetas(prev=>[{...prev[0],diaCorte:v},...prev.slice(1)]);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
                 </div>
               </div>
 
@@ -242,9 +247,9 @@ export default function AppPro({ onLogout, onGoCalc }){
                 <div style={{fontSize:10,color:C.t3,marginBottom:6}}>💰 Día límite de pago <span style={{color:C.t3}}>(cuando tienes que pagar)</span></div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                   {[1,5,10,15,17,20,25,28].map(d=>(
-                    <button key={d} onClick={()=>setDiaPago(d)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${diaPago===d?C.accent:C.border}`,background:diaPago===d?C.accent+"22":"transparent",color:diaPago===d?C.accent:C.t3,fontSize:11,fontWeight:diaPago===d?700:400,cursor:"pointer"}}>día {d}</button>
+                    <button key={d} onClick={()=>setTarjetas(prev=>[{...prev[0],diaPago:d},...prev.slice(1)])} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${tarjetas[0]?.diaPago===d?C.accent:C.border}`,background:tarjetas[0]?.diaPago===d?C.accent+"22":"transparent",color:tarjetas[0]?.diaPago===d?C.accent:C.t3,fontSize:11,fontWeight:tarjetas[0]?.diaPago===d?700:400,cursor:"pointer"}}>día {d}</button>
                   ))}
-                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(diaPago)&&diaPago>0?diaPago:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setDiaPago(v);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
+                  <input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,17,20,25,28].includes(tarjetas[0]?.diaPago||0)&&(tarjetas[0]?.diaPago||0)>0?tarjetas[0].diaPago:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setTarjetas(prev=>[{...prev[0],diaPago:v},...prev.slice(1)]);}} style={{width:55,padding:"5px 8px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:11,outline:"none",textAlign:"center"}}/>
                 </div>
                 <button onClick={()=>setShowTipFecha(!showTipFecha)} style={{marginTop:8,background:"none",border:"none",color:C.purple,fontSize:11,cursor:"pointer",padding:0,textDecoration:"underline"}}>
                   {showTipFecha?"▲ Ocultar":"❓ No sé mis fechas — ¿cómo las consulto?"}
@@ -270,14 +275,14 @@ export default function AppPro({ onLogout, onGoCalc }){
               </div>
             </>}
 
-            {(saldoInicial>0||deudaTarjetaInicial>0)&&<div style={{marginTop:10,padding:"8px 10px",borderRadius:8,background:C.bg}}>
+            {(saldoInicial>0||deudaTotalInicial>0)&&<div style={{marginTop:10,padding:"8px 10px",borderRadius:8,background:C.bg}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                 <span style={{fontSize:11,color:C.t2}}>Liquidez disponible hoy</span>
                 <span style={{fontSize:13,fontWeight:800,color:C.accent}}>{fmt(saldoInicial)}</span>
               </div>
-              {deudaTarjetaInicial>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
-                <span style={{fontSize:11,color:C.t2}}>Comprometido en tarjeta{diaPago>0?` (pago día ${diaPago})`:diaCorte>0?` (corte día ${diaCorte})`:""}</span>
-                <span style={{fontSize:13,fontWeight:800,color:C.purple}}>−{fmt(deudaTarjetaInicial)}</span>
+              {deudaTotalInicial>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontSize:11,color:C.t2}}>Comprometido en tarjeta(s)</span>
+                <span style={{fontSize:13,fontWeight:800,color:C.purple}}>−{fmt(deudaTotalInicial)}</span>
               </div>}
             </div>}
           </div>
@@ -524,7 +529,12 @@ export default function AppPro({ onLogout, onGoCalc }){
           <div style={{fontSize:12,fontWeight:700,color:s.c}}>{fmt(s.v)}</div>
         </div>)}
       </div>}
-      {(tab==="resumen"||tab==="registro")&&(tarjetaMes>0||deudaTarjetaInicial>0)&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{deudaTarjetaInicial>0&&<span style={{fontSize:10,color:C.t3}}> · Deuda anterior: {fmt(deudaTarjetaInicial)}</span>}{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>{tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Tu saldo disponible muestra {fmt(balMes)}, pero necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu tarjeta cuando llegue el corte. Tu disponible real es <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}{deudaTarjetaInicial>0&&<div style={{fontSize:11,color:C.t3,paddingLeft:24,marginTop:4}}>Deuda total incluyendo anterior: <strong style={{color:C.purple}}>{fmt(tarjetaMes+deudaTarjetaInicial-pagosTarjetaMes)}</strong></div>}</div>}
+      {(tab==="resumen"||tab==="registro")&&(tarjetaMes>0||deudaTotalInicial>0)&&<div style={{margin:"0 16px 10px",padding:"10px 12px",background:C.purple+"12",borderRadius:10,border:`1px solid ${C.purple}33`}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:16}}>💳</span><div style={{flex:1}}><span style={{fontSize:11,color:C.purple,fontWeight:700}}>Llevas {fmt(tarjetaMes)} cargados a tarjeta este mes</span>{deudaTotalInicial>0&&<span style={{fontSize:10,color:C.t3}}> · Deuda anterior: {fmt(deudaTotalInicial)}</span>}{pagosTarjetaMes>0&&<span style={{fontSize:10,color:C.accent}}> · Abonado: {fmt(pagosTarjetaMes)}</span>}</div></div>
+        {tarjetas.length>0&&<div style={{marginTop:6,paddingLeft:24}}>{tarjetas.map(t=><div key={t.id} style={{fontSize:10,color:C.t3,marginBottom:2}}>{t.nombre}{t.diaPago>0?` · pago día ${t.diaPago}`:""}{t.deudaInicial>0?` · deuda anterior: ${fmt(t.deudaInicial)}`:""}</div>)}</div>}
+        {tarjetaMes>pagosTarjetaMes&&<div style={{fontSize:11,color:C.warning,lineHeight:1.5,paddingLeft:24,marginTop:4}}>⚠️ Necesitas apartar <strong style={{color:C.purple}}>{fmt(tarjetaMes-pagosTarjetaMes)}</strong> para pagar tu(s) tarjeta(s). Disponible real: <strong style={{color:balMes-(tarjetaMes-pagosTarjetaMes)>=0?C.accent:C.danger}}>{fmt(balMes-(tarjetaMes-pagosTarjetaMes))}</strong>{balMes-(tarjetaMes-pagosTarjetaMes)<0?" — ¡cuidado, no te va a alcanzar!":""}</div>}
+        {deudaTotalInicial>0&&<div style={{fontSize:11,color:C.t3,paddingLeft:24,marginTop:4}}>Deuda total incluyendo anterior: <strong style={{color:C.purple}}>{fmt(tarjetaMes+deudaTotalInicial-pagosTarjetaMes)}</strong></div>}
+      </div>}
 
       <div style={{padding:"0 16px",animation:"fadeIn 0.3s"}}>
 
@@ -800,25 +810,28 @@ export default function AppPro({ onLogout, onGoCalc }){
                 <tbody>
                   {(()=>{
                     const mesIdx=MESES.indexOf(mes);
-                    // Proyectar pagos de tarjeta según día de corte y día de pago
+                    // Proyectar pagos de tarjeta según día de corte y día de pago — soporta múltiples tarjetas
                     const pagoTarjetaPorMes=gastos.reduce((acc,g)=>{
                       if(g.metodo!=="tarjeta"||g.sub==="Pago de tarjeta")return acc;
                       const diaGasto=parseInt((g.fecha||"").split("-")[2])||1;
                       const mesGastoIdx=MESES.indexOf(g.mes);
                       if(mesGastoIdx<0||g.año!==año)return acc;
-                      // Si el gasto es después del corte, entra al ciclo siguiente
-                      const cicloExtra=diaCorte>0&&diaGasto>diaCorte?1:0;
-                      // El mes de pago: mes del gasto + 1 ciclo + si el día de pago es menor al corte, ya es el mes siguiente
+                      // Buscar la tarjeta con la que se hizo el gasto (si tiene tarjetaId, sino usar la primera)
+                      const tdc=tarjetas.find(t=>t.id===g.tarjetaId)||tarjetas[0]||{diaCorte:0,diaPago:0};
+                      const cicloExtra=tdc.diaCorte>0&&diaGasto>tdc.diaCorte?1:0;
                       let mesPago=(mesGastoIdx+1+cicloExtra)%12;
-                      // Si tiene día de pago definido y es antes del corte del mes siguiente, ajustar
                       acc[mesPago]=(acc[mesPago]||0)+Math.abs(g.monto);
                       return acc;
                     },{});
-                    // Deuda inicial cae en el próximo día de pago — solo en el año actual
-                    if(deudaTarjetaInicial>0&&añoFlujo===año){
+                    // Deuda inicial de cada tarjeta cae en su próximo día de pago
+                    if(añoFlujo===año){
                       const hoy=new Date().getDate();
-                      const mesPagoDeuda=diaPago>0&&hoy<=diaPago?mesIdx:(mesIdx+1)%12;
-                      pagoTarjetaPorMes[mesPagoDeuda]=(pagoTarjetaPorMes[mesPagoDeuda]||0)+deudaTarjetaInicial;
+                      tarjetas.forEach(t=>{
+                        if((t.deudaInicial||0)>0){
+                          const mesPagoDeuda=t.diaPago>0&&hoy<=t.diaPago?mesIdx:(mesIdx+1)%12;
+                          pagoTarjetaPorMes[mesPagoDeuda]=(pagoTarjetaPorMes[mesPagoDeuda]||0)+t.deudaInicial;
+                        }
+                      });
                     }
                     const flujos=MESES.map((mn,i)=>{
                       const pk2=`${mn}_${añoFlujo}`;
@@ -901,7 +914,8 @@ export default function AppPro({ onLogout, onGoCalc }){
             <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:14,border:`1px solid ${C.border}`}}><input type="number" value={qMonto} onChange={e=>setQMonto(e.target.value)} placeholder="$0" style={{background:"transparent",border:"none",color:C.t1,fontSize:36,fontWeight:800,textAlign:"center",outline:"none",width:"100%",fontFamily:"'Space Grotesk',monospace"}}/><input type="text" value={qNota} onChange={e=>setQNota(e.target.value)} placeholder="Nota (opcional)" style={{background:"transparent",border:"none",color:C.t3,fontSize:12,textAlign:"center",outline:"none",width:"100%",marginTop:4}}/></div>
             <div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"gasto",l:"💸 Gasto",c:C.danger},{id:"ingreso",l:"💰 Ingreso",c:C.accent},{id:"ahorro",l:"🐷 Ahorro",c:C.cyan}].map(t=><button key={t.id} onClick={()=>setQTipo(t.id)} style={{flex:1,padding:7,borderRadius:8,border:`2px solid ${qTipo===t.id?t.c:C.border}`,background:qTipo===t.id?t.c+"15":"transparent",color:qTipo===t.id?t.c:C.t3,fontSize:11,fontWeight:600,cursor:"pointer"}}>{t.l}</button>)}</div>
             {qTipo==="ahorro"&&<div style={{padding:"8px 10px",borderRadius:8,background:`${C.cyan}10`,border:`1px solid ${C.cyan}22`,marginBottom:8,fontSize:11,color:C.t2}}>🐷 <strong style={{color:C.t1}}>Ahorro</strong> = dinero que separas pero sigue siendo tuyo. 📈 <strong style={{color:C.t1}}>Inversión</strong> = lo pones a trabajar en CETES, fondos, etc. Usa el ícono de Inversión abajo si quieres registrar rendimientos.</div>}
-            {qTipo==="gasto"&&<div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"efectivo",l:"💵 Efectivo/Débito",c:C.accent},{id:"tarjeta",l:"💳 Tarjeta crédito",c:C.purple}].map(m=><button key={m.id} onClick={()=>setQMetodo(m.id)} style={{flex:1,padding:6,borderRadius:8,border:`2px solid ${qMetodo===m.id?m.c:C.border}`,background:qMetodo===m.id?m.c+"15":"transparent",color:qMetodo===m.id?m.c:C.t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{m.l}</button>)}</div>}
+            {qTipo==="gasto"&&<div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"efectivo",l:"💵 Efectivo/Débito",c:C.accent},{id:"tarjeta",l:"💳 Tarjeta crédito",c:C.purple}].map(m=><button key={m.id} onClick={()=>{setQMetodo(m.id);if(m.id==="tarjeta"&&tarjetas.length>0)setTarjetaSelReg(tarjetas[0].id);}} style={{flex:1,padding:6,borderRadius:8,border:`2px solid ${qMetodo===m.id?m.c:C.border}`,background:qMetodo===m.id?m.c+"15":"transparent",color:qMetodo===m.id?m.c:C.t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{m.l}</button>)}</div>}
+            {qTipo==="gasto"&&qMetodo==="tarjeta"&&tarjetas.length>1&&<div style={{marginBottom:10}}><div style={{fontSize:10,color:C.t3,marginBottom:4}}>¿Con cuál tarjeta?</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{tarjetas.map(t=><button key={t.id} onClick={()=>setTarjetaSelReg(t.id)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${tarjetaSelReg===t.id?C.purple:C.border}`,background:tarjetaSelReg===t.id?C.purple+"22":"transparent",color:tarjetaSelReg===t.id?C.purple:C.t3,fontSize:11,fontWeight:tarjetaSelReg===t.id?700:400,cursor:"pointer"}}>{t.nombre}</button>)}</div></div>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro"||q.tipo==="inversion":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){if(q.tipo==="inversion"){const invId=Date.now()+Math.floor(Math.random()*10000);showToast(`${q.icon} ${fmt(parseFloat(qMonto))}`);setInvModalData({monto:parseFloat(qMonto),mes,año,movId:invId});setShowInvModal(true);}else{addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);}setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
             {tarjetaMes>0&&<button onClick={()=>{const monto=prompt("¿Cuánto pagaste a tu tarjeta?");if(monto&&parseFloat(monto)>0){addMov("Deuda","Pago de tarjeta",monto,"Pago a tarjeta de crédito","pago_tarjeta");showToast("✅ Pago de tarjeta registrado");}}} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.purple}33`,background:C.purple+"10",color:C.purple,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💳 Registrar pago a tarjeta de crédito</button>}
             {inversiones.length>0&&<button onClick={()=>setShowRetiroModal(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.cyan}33`,background:C.cyan+"10",color:C.cyan,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💰 Retirar inversión</button>}
@@ -932,37 +946,22 @@ export default function AppPro({ onLogout, onGoCalc }){
                   <div style={{fontSize:13,fontWeight:700,color:C.accent}}>{fmt(saldoInicial)}</div>
                 </div>
                 <div style={{background:C.bg,borderRadius:8,padding:"7px 10px"}}>
-                  <div style={{fontSize:9,color:C.t3,marginBottom:1}}>💳 Deuda tarjeta</div>
-                  <div style={{fontSize:13,fontWeight:700,color:deudaTarjetaInicial>0?C.purple:C.t3}}>{deudaTarjetaInicial>0?fmt(deudaTarjetaInicial):"Sin deuda"}</div>
+                  <div style={{fontSize:9,color:C.t3,marginBottom:1}}>💳 Deuda tarjeta(s)</div>
+                  <div style={{fontSize:13,fontWeight:700,color:deudaTotalInicial>0?C.purple:C.t3}}>{deudaTotalInicial>0?fmt(deudaTotalInicial):"Sin deuda"}</div>
                 </div>
-                <div style={{background:C.bg,borderRadius:8,padding:"7px 10px"}}>
-                  <div style={{fontSize:9,color:C.t3,marginBottom:1}}>📅 Día de corte</div>
-                  <div style={{fontSize:13,fontWeight:700,color:diaCorte>0?C.t1:C.t3}}>{diaCorte>0?`Día ${diaCorte}`:"No definido"}</div>
-                </div>
-                <div style={{background:C.bg,borderRadius:8,padding:"7px 10px"}}>
-                  <div style={{fontSize:9,color:C.t3,marginBottom:1}}>💰 Día de pago</div>
-                  <div style={{fontSize:13,fontWeight:700,color:diaPago>0?C.t1:C.t3}}>{diaPago>0?`Día ${diaPago}`:"No definido"}</div>
-                </div>
+                {tarjetas.map(t=><div key={t.id} style={{background:C.bg,borderRadius:8,padding:"7px 10px",gridColumn:"span 2"}}>
+                  <div style={{fontSize:9,color:C.purple,marginBottom:1,fontWeight:700}}>💳 {t.nombre}</div>
+                  <div style={{fontSize:10,color:C.t3}}>{t.diaCorte>0?`Corte día ${t.diaCorte}`:""}{t.diaCorte>0&&t.diaPago>0?" · ":""}{t.diaPago>0?`Pago día ${t.diaPago}`:""}{!t.diaCorte&&!t.diaPago?"Fechas no definidas":""}</div>
+                </div>)}
               </div>:<div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
                   <div>
                     <div style={{fontSize:10,color:C.t3,marginBottom:3}}>🏦 Saldo en banco</div>
                     <input type="number" placeholder="$0" value={saldoInicial||""} onChange={e=>setSaldoInicial(parseFloat(e.target.value)||0)} style={{...is2,color:C.accent}}/>
                   </div>
-                  <div>
-                    <div style={{fontSize:10,color:C.t3,marginBottom:3}}>💳 Deuda tarjeta</div>
-                    <input type="number" placeholder="$0" value={deudaTarjetaInicial||""} onChange={e=>setDeudaTarjetaInicial(parseFloat(e.target.value)||0)} style={{...is2,color:C.purple}}/>
-                  </div>
-                  <div>
-                    <div style={{fontSize:10,color:C.t3,marginBottom:3}}>📅 Día de corte</div>
-                    <input type="number" placeholder="ej: 20" min={1} max={31} value={diaCorte||""} onChange={e=>setDiaCorte(parseInt(e.target.value)||0)} style={{...is2}}/>
-                  </div>
-                  <div>
-                    <div style={{fontSize:10,color:C.t3,marginBottom:3}}>💰 Día de pago</div>
-                    <input type="number" placeholder="ej: 10" min={1} max={31} value={diaPago||""} onChange={e=>setDiaPago(parseInt(e.target.value)||0)} style={{...is2}}/>
-                  </div>
                 </div>
-                <button onClick={()=>{setEditandoConfig(false);showToast("✅ Configuración actualizada");}} style={{width:"100%",padding:9,borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer"}}>Guardar cambios</button>
+                <button onClick={()=>setEditandoConfig(false)} style={{width:"100%",padding:9,borderRadius:8,border:"none",background:C.accent,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",marginBottom:4}}>Guardar cambios</button>
+                <div style={{fontSize:10,color:C.t3,textAlign:"center"}}>Para editar tarjetas ve a la pestaña Perfil → Mis tarjetas</div>
               </div>}
             </Card>;
           })()}
@@ -1269,6 +1268,26 @@ export default function AppPro({ onLogout, onGoCalc }){
 
         {tab==="perfil"&&<div>
           <div style={{textAlign:"center",padding:"16px 0"}}><div style={{display:"flex",justifyContent:"center",marginBottom:10}}><svg width="60" height="60" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="57" stroke={C.accent} strokeWidth="2.5" fill="none" opacity="0.2"/><rect x="30" y="72" width="60" height="6" rx="1.5" fill={C.accent} opacity="0.85"/><rect x="38" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="57.5" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="77" y="45" width="5" height="27" rx="1.5" fill={C.accent} opacity="0.7"/><rect x="36" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><rect x="55.5" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><rect x="75" y="43" width="9" height="3" rx="1" fill={C.accent} opacity="0.9"/><path d="M28 43 L60 24 L92 43" stroke={C.accent} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="28" y1="43" x2="92" y2="43" stroke={C.accent} strokeWidth="2.5" strokeLinecap="round"/><text x="60" y="65" textAnchor="middle" fontSize="20" fontWeight="700" fontFamily="sans-serif" fill={C.accent}>$</text><rect x="20" y="38" width="4" height="40" rx="1" fill={C.accent+"55"}/><path d="M96 78 L96 38 L108 78 Z" stroke={C.accent+"55"} strokeWidth="1.5" fill="none"/></svg></div><div style={{fontSize:18,fontWeight:700,color:C.t1}}>{nombre}</div><div style={{fontSize:11,color:C.accent,marginTop:2}}>Arquitecto Financiero Pro ✓</div><div style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:8,background:racha>=7?C.warning+"15":C.card,borderRadius:20,padding:"4px 14px",border:`1px solid ${racha>=7?C.warning+"33":C.border}`}}><span style={{fontSize:14}}>{racha>=30?"🏆":racha>=7?"🔥":"📅"}</span><span style={{fontSize:12,fontWeight:700,color:racha>=7?C.warning:C.t2}}>{racha} días de racha</span></div></div>
+          <Card style={{marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.t1}}>💳 Mis tarjetas de crédito</div>
+              <button onClick={()=>setShowTarjetaForm(true)} style={{padding:"4px 10px",borderRadius:8,border:`1px solid ${C.purple}`,background:C.purple+"15",color:C.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Agregar</button>
+            </div>
+            {tarjetas.length===0&&<p style={{fontSize:12,color:C.t3,textAlign:"center",padding:"10px 0"}}>No tienes tarjetas registradas</p>}
+            {tarjetas.map(t=><div key={t.id} style={{background:C.bg,borderRadius:10,padding:"10px 12px",marginBottom:8,border:`1px solid ${C.border}`}}>
+              {editingTarjeta===t.id?<TarjetaEditForm tarjeta={t} onSave={data=>{setTarjetas(prev=>prev.map(x=>x.id===t.id?{...x,...data}:x));setEditingTarjeta(null);showToast("✅ Tarjeta actualizada");}} onCancel={()=>setEditingTarjeta(null)}/>
+              :<div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:20}}>💳</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:700,color:C.t1}}>{t.nombre}</div>
+                  <div style={{fontSize:10,color:C.t3}}>{t.deudaInicial>0?`Deuda: ${fmt(t.deudaInicial)} · `:""}{t.diaCorte>0?`Corte día ${t.diaCorte}`:""}{t.diaCorte>0&&t.diaPago>0?" · ":""}{t.diaPago>0?`Pago día ${t.diaPago}`:""}</div>
+                </div>
+                <button onClick={()=>setEditingTarjeta(t.id)} style={{background:"none",border:"none",color:C.cyan,fontSize:11,cursor:"pointer"}}>✏️</button>
+                <button onClick={()=>setTarjetas(prev=>prev.filter(x=>x.id!==t.id))} style={{background:"none",border:"none",color:C.t3,fontSize:11,cursor:"pointer"}}>✕</button>
+              </div>}
+            </div>)}
+            {showTarjetaForm&&<TarjetaEditForm tarjeta={{id:`tdc_${Date.now()}`,nombre:"",deudaInicial:0,diaCorte:0,diaPago:0}} onSave={data=>{setTarjetas(prev=>[...prev,data]);setShowTarjetaForm(false);showToast("✅ Tarjeta agregada");}} onCancel={()=>setShowTarjetaForm(false)} isNew/>}
+          </Card>
           <Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>🏅 Logros ({logros.length})</div>{logros.length===0?<p style={{fontSize:12,color:C.t3,textAlign:"center",padding:10}}>Registra movimientos para desbloquear</p>:<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>{logros.map((l,i)=><div key={i} style={{background:C.bg,borderRadius:10,padding:"8px 4px",textAlign:"center",border:`1px solid ${C.accent}22`}}><div style={{fontSize:20}}>{l.icon}</div><div style={{fontSize:9,fontWeight:700,color:C.t1}}>{l.label}</div></div>)}</div>}</Card>
           <Card style={{marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}}>🎯 Metas de ahorro</div>{metas.map(m=>{const pct=m.monto>0?Math.min((ahoAcumulado/m.monto)*100,100):0;return<div key={m.id} style={{padding:"6px 0",borderBottom:`1px solid ${C.border}11`}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:12,color:C.t1,fontWeight:600}}>{m.nombre}</span><div style={{display:"flex",gap:6}}><span style={{fontSize:11,color:C.t2}}>{fmt(m.monto)}</span><button onClick={()=>delMeta(m.id)} style={{background:"none",border:"none",color:C.t3,cursor:"pointer",fontSize:10}}>✕</button></div></div><div style={{height:6,background:C.border,borderRadius:3}}><div style={{height:"100%",width:`${pct}%`,background:pct>=100?C.accent:C.cyan,borderRadius:3}}/></div><div style={{fontSize:9,color:C.t3,marginTop:2}}>{Math.round(pct)}%{pct>=100?" — ¡Meta cumplida! 🎉":""}</div></div>;})}<MetaForm onAdd={addMeta}/></Card>
           
@@ -1295,3 +1314,26 @@ function EditablePresItem({name,value,color,onApply}){const[editing,setEditing]=
 function EditMovForm({mov,onSave,onCancel}){const[cat,setCat]=useState(mov.cat);const[sub,setSub]=useState(mov.sub);const[monto,setMonto]=useState(Math.abs(mov.monto).toString());const[nota,setNota]=useState(mov.desc||"");const subs=SUBCATS[cat]||[];const is={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:12,outline:"none",marginBottom:6};return<div style={{background:C.card,borderRadius:10,padding:12,border:`1px solid ${C.cyan}33`,marginBottom:8,animation:"fadeIn 0.2s"}}><div style={{fontSize:11,fontWeight:700,color:C.cyan,marginBottom:8}}>Editar movimiento</div><select value={cat} onChange={e=>{setCat(e.target.value);setSub((SUBCATS[e.target.value]||[])[0]||"");}} style={is}>{CATEGORIAS.map(c=><option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}</select><select value={sub} onChange={e=>setSub(e.target.value)} style={is}>{subs.map(s=><option key={s} value={s}>{s}</option>)}</select><input type="number" value={monto} onChange={e=>setMonto(e.target.value)} placeholder="Monto" style={is}/><input type="text" value={nota} onChange={e=>setNota(e.target.value)} placeholder="Nota" style={is}/><div style={{display:"flex",gap:6}}><button onClick={onCancel} style={{flex:1,padding:8,borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:11}}>Cancelar</button><button onClick={()=>onSave(mov.id,cat,sub,monto,nota)} style={{flex:1,padding:8,borderRadius:8,border:"none",background:C.cyan,color:"#000",cursor:"pointer",fontSize:11,fontWeight:700}}>Guardar</button></div></div>;}
 function ScheduledForm({onAdd}){const[show,setShow]=useState(false);const[n,setN]=useState("");const[m,setM]=useState("");const[mp,setMp]=useState(0);const[r,setR]=useState(true);if(!show)return<button onClick={()=>setShow(true)} style={{width:"100%",padding:10,borderRadius:8,border:`2px dashed ${C.border}`,background:"transparent",color:C.t3,fontSize:11,cursor:"pointer"}}>+ Agregar gasto programado</button>;const is={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:13,outline:"none",marginBottom:6};return<div style={{background:C.card,borderRadius:10,padding:12,border:`1px solid ${C.border}`,marginTop:8}}><input type="text" value={n} onChange={e=>setN(e.target.value)} placeholder="Nombre (ej: Anualidad carro)" style={is}/><input type="number" value={m} onChange={e=>setM(e.target.value)} placeholder="Monto" style={is}/><select value={mp} onChange={e=>setMp(parseInt(e.target.value))} style={is}>{MESES.map((ms,i)=><option key={i} value={i}>{ms}</option>)}</select><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><button onClick={()=>setR(!r)} style={{width:36,height:20,borderRadius:10,border:"none",cursor:"pointer",background:r?C.accent:C.border,position:"relative"}}><div style={{width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:2,left:r?18:2,transition:"all 0.2s"}}/></button><span style={{fontSize:11,color:C.t2}}>Se repite cada año</span></div><div style={{display:"flex",gap:6}}><button onClick={()=>setShow(false)} style={{flex:1,padding:8,borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:11}}>Cancelar</button><button onClick={()=>{if(n&&m){onAdd(n,m,mp,r);setN("");setM("");setShow(false);}}} disabled={!n||!m} style={{flex:1,padding:8,borderRadius:8,border:"none",background:n&&m?C.accent:C.border,color:n&&m?"#000":C.t3,cursor:"pointer",fontSize:11,fontWeight:700}}>Agregar</button></div></div>;}
 function MetaForm({onAdd}){const[show,setShow]=useState(false);const[n,setN]=useState("");const[m,setM]=useState("");if(!show)return<button onClick={()=>setShow(true)} style={{width:"100%",padding:10,borderRadius:8,border:`2px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:11,cursor:"pointer",marginTop:8}}>+ Agregar meta de ahorro</button>;const is={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:13,outline:"none",marginBottom:6};return<div style={{background:C.bg,borderRadius:10,padding:12,border:`1px solid ${C.border}`,marginTop:8}}><input type="text" value={n} onChange={e=>setN(e.target.value)} placeholder="Nombre (ej: Viaje a Europa)" style={is}/><input type="number" value={m} onChange={e=>setM(e.target.value)} placeholder="Monto meta ($)" style={is}/><div style={{display:"flex",gap:6}}><button onClick={()=>setShow(false)} style={{flex:1,padding:8,borderRadius:8,background:C.card,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:11}}>Cancelar</button><button onClick={()=>{if(n&&m){onAdd(n,m);setN("");setM("");setShow(false);}}} disabled={!n||!m} style={{flex:1,padding:8,borderRadius:8,border:"none",background:n&&m?C.accent:C.border,color:n&&m?"#000":C.t3,cursor:"pointer",fontSize:11,fontWeight:700}}>Agregar</button></div></div>;}
+function TarjetaEditForm({tarjeta,onSave,onCancel,isNew=false}){
+  const[nombre,setNombre]=useState(tarjeta.nombre||"");
+  const[deuda,setDeuda]=useState(tarjeta.deudaInicial||"");
+  const[corte,setCorte]=useState(tarjeta.diaCorte||0);
+  const[pago,setPago]=useState(tarjeta.diaPago||0);
+  const is={width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,background:C.card,border:`1px solid ${C.border}`,color:C.t1,fontSize:13,outline:"none",marginBottom:6};
+  return<div style={{animation:"fadeIn 0.2s"}}>
+    {isNew&&<div style={{fontSize:11,fontWeight:700,color:C.purple,marginBottom:8}}>Nueva tarjeta</div>}
+    <input type="text" value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre (ej: BBVA, Amex)" style={is}/>
+    <input type="number" value={deuda} onChange={e=>setDeuda(e.target.value)} placeholder="Deuda actual $0" style={{...is,color:C.purple}}/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+      <div>
+        <div style={{fontSize:10,color:C.t3,marginBottom:4}}>📅 Día de corte</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:3}}>{[10,15,17,20,25,28].map(d=><button key={d} onClick={()=>setCorte(d)} style={{padding:"4px 8px",borderRadius:6,border:`1px solid ${corte===d?C.purple:C.border}`,background:corte===d?C.purple+"22":"transparent",color:corte===d?C.purple:C.t3,fontSize:10,cursor:"pointer"}}>día {d}</button>)}<input type="number" placeholder="otro" min={1} max={31} value={![0,10,15,17,20,25,28].includes(corte)&&corte>0?corte:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setCorte(v);}} style={{width:50,padding:"4px 6px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:10,outline:"none",textAlign:"center"}}/></div>
+      </div>
+      <div>
+        <div style={{fontSize:10,color:C.t3,marginBottom:4}}>💰 Día de pago</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:3}}>{[1,5,10,15,20,25].map(d=><button key={d} onClick={()=>setPago(d)} style={{padding:"4px 8px",borderRadius:6,border:`1px solid ${pago===d?C.accent:C.border}`,background:pago===d?C.accent+"22":"transparent",color:pago===d?C.accent:C.t3,fontSize:10,cursor:"pointer"}}>día {d}</button>)}<input type="number" placeholder="otro" min={1} max={31} value={![0,1,5,10,15,20,25].includes(pago)&&pago>0?pago:""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=31)setPago(v);}} style={{width:50,padding:"4px 6px",borderRadius:6,background:C.bg,border:`1px solid ${C.border}`,color:C.t1,fontSize:10,outline:"none",textAlign:"center"}}/></div>
+      </div>
+    </div>
+    <div style={{display:"flex",gap:6}}><button onClick={onCancel} style={{flex:1,padding:8,borderRadius:8,background:C.bg,border:`1px solid ${C.border}`,color:C.t3,cursor:"pointer",fontSize:11}}>Cancelar</button><button onClick={()=>{if(nombre.trim())onSave({...tarjeta,nombre:nombre.trim(),deudaInicial:parseFloat(deuda)||0,diaCorte:corte,diaPago:pago});}} disabled={!nombre.trim()} style={{flex:1,padding:8,borderRadius:8,border:"none",background:nombre.trim()?C.purple:C.border,color:nombre.trim()?"#fff":C.t3,cursor:nombre.trim()?"pointer":"default",fontSize:11,fontWeight:700}}>{isNew?"Agregar tarjeta":"Guardar"}</button></div>
+  </div>;
+}
