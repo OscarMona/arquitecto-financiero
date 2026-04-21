@@ -76,6 +76,9 @@ export default function AppPro({ onLogout, onGoCalc }){
   const [extraName,setExtraName]=useState("");
   const [loaded,setLoaded]=useState(false);
   const [pwaBannerCerrado,setPwaBannerCerrado]=useState(false);
+  const [showPagoTarjetaModal,setShowPagoTarjetaModal]=useState(false);
+  const [pagoTarjetaMonto,setPagoTarjetaMonto]=useState("");
+  const [showConfirmReset,setShowConfirmReset]=useState(null);
 
   const { user } = useAuth();
 
@@ -512,6 +515,37 @@ export default function AppPro({ onLogout, onGoCalc }){
         </div>
       </div>}
 
+      {/* MODAL PAGO TARJETA */}
+      {showPagoTarjetaModal&&<div style={{position:"fixed",inset:0,background:"#000a",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+        <div style={{background:C.card,borderRadius:"20px 20px 0 0",padding:24,width:"100%",maxWidth:480,border:`1px solid ${C.purple}33`}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.t1,marginBottom:4}}>💳 Registrar pago a tarjeta</div>
+          <div style={{fontSize:11,color:C.t3,marginBottom:16}}>¿Cuánto pagaste a tu tarjeta de crédito?</div>
+          <input type="number" placeholder="$0" value={pagoTarjetaMonto} onChange={e=>setPagoTarjetaMonto(e.target.value)} autoFocus
+            style={{width:"100%",boxSizing:"border-box",padding:"12px 14px",borderRadius:10,background:C.bg,border:`1px solid ${C.purple}44`,color:C.purple,fontSize:22,fontWeight:800,outline:"none",textAlign:"center",marginBottom:16}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{setShowPagoTarjetaModal(false);setPagoTarjetaMonto("");}} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:13,cursor:"pointer"}}>Cancelar</button>
+            <button onClick={()=>{if(pagoTarjetaMonto&&parseFloat(pagoTarjetaMonto)>0){addMov("Deuda","Pago de tarjeta",pagoTarjetaMonto,"Pago a tarjeta de crédito","pago_tarjeta");showToast("✅ Pago de tarjeta registrado");setShowPagoTarjetaModal(false);setPagoTarjetaMonto("");}}} disabled={!pagoTarjetaMonto||parseFloat(pagoTarjetaMonto)<=0} style={{flex:2,padding:12,borderRadius:10,border:"none",background:pagoTarjetaMonto&&parseFloat(pagoTarjetaMonto)>0?C.purple:C.border,color:pagoTarjetaMonto&&parseFloat(pagoTarjetaMonto)>0?"#fff":C.t3,fontSize:13,fontWeight:700,cursor:"pointer"}}>Registrar pago →</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* MODAL CONFIRMACIÓN RESET */}
+      {showConfirmReset&&<div style={{position:"fixed",inset:0,background:"#000c",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+        <div style={{background:C.card,borderRadius:20,padding:24,width:"100%",maxWidth:380,border:`1px solid ${C.danger}44`}}>
+          <div style={{fontSize:22,textAlign:"center",marginBottom:8}}>⚠️</div>
+          <div style={{fontSize:15,fontWeight:700,color:C.t1,textAlign:"center",marginBottom:8}}>{showConfirmReset==="pres"?"¿Reiniciar presupuesto?":"¿Reiniciar todo?"}</div>
+          <div style={{fontSize:12,color:C.t2,textAlign:"center",marginBottom:20,lineHeight:1.6}}>{showConfirmReset==="pres"?"Solo se borra el plan de presupuesto. Tus movimientos y saldo se conservan.":"Se borrarán presupuesto, movimientos, saldo, tarjetas y configuración. Esta acción no se puede deshacer."}</div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setShowConfirmReset(null)} style={{flex:1,padding:12,borderRadius:10,border:`1px solid ${C.border}`,background:"transparent",color:C.t3,fontSize:13,cursor:"pointer"}}>Cancelar</button>
+            <button onClick={()=>{
+              if(showConfirmReset==="pres"){setPres({});showToast("Presupuesto reiniciado");}
+              else{setPres({});setGastos([]);setInversiones([]);setProgramados([]);setMetas([]);setSaldoInicial(0);setTarjetas([]);setProrateados({});setProrateosRechazados({});setProgramadosPagados({});setOnboarded(false);showToast("Todo reiniciado");}
+              setShowConfirmReset(null);
+            }} style={{flex:1,padding:12,borderRadius:10,border:"none",background:C.danger,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>{showConfirmReset==="pres"?"Sí, reiniciar":"Sí, borrar todo"}</button>
+          </div>
+        </div>
+      </div>}
+
       <div style={{margin:"0 16px 8px",padding:"8px 12px",background:C.warning+"12",borderRadius:8,border:`1px solid ${C.warning}33`,textAlign:"center"}}><span style={{fontSize:11,color:C.warning}}>🚧 Estamos en construcción — tu feedback nos ayuda a mejorar</span></div>
 
       <div style={{padding:"14px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:11,color:C.t3}}>Hola, {nombre} 👋</div>{tab!=="presupuesto"&&<div style={{fontSize:15,fontWeight:700}}>{mes} {año}</div>}{tab!=="presupuesto"&&<div style={{fontSize:9,color:C.accent,fontWeight:600,marginTop:1}}>📊 Movimientos reales del mes</div>}</div><div style={{display:"flex",gap:6}}><button onClick={()=>{const i=MESES.indexOf(mes);if(i===0){if(año>2026){setMes(MESES[11]);setAño(año-1);}}else setMes(MESES[i-1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>←</button><button onClick={()=>{const i=MESES.indexOf(mes);if(i===11){if(año<2027){setMes(MESES[0]);setAño(año+1);}}else setMes(MESES[i+1]);}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:8,color:C.t2,padding:"6px 10px",cursor:"pointer",fontSize:12}}>→</button></div></div>
@@ -917,7 +951,7 @@ export default function AppPro({ onLogout, onGoCalc }){
             {qTipo==="gasto"&&<div style={{display:"flex",gap:6,marginBottom:10}}>{[{id:"efectivo",l:"💵 Efectivo/Débito",c:C.accent},{id:"tarjeta",l:"💳 Tarjeta crédito",c:C.purple}].map(m=><button key={m.id} onClick={()=>{setQMetodo(m.id);if(m.id==="tarjeta"&&tarjetas.length>0)setTarjetaSelReg(tarjetas[0].id);}} style={{flex:1,padding:6,borderRadius:8,border:`2px solid ${qMetodo===m.id?m.c:C.border}`,background:qMetodo===m.id?m.c+"15":"transparent",color:qMetodo===m.id?m.c:C.t3,fontSize:10,fontWeight:600,cursor:"pointer"}}>{m.l}</button>)}</div>}
             {qTipo==="gasto"&&qMetodo==="tarjeta"&&tarjetas.length>1&&<div style={{marginBottom:10}}><div style={{fontSize:10,color:C.t3,marginBottom:4}}>¿Con cuál tarjeta?</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{tarjetas.map(t=><button key={t.id} onClick={()=>setTarjetaSelReg(t.id)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${tarjetaSelReg===t.id?C.purple:C.border}`,background:tarjetaSelReg===t.id?C.purple+"22":"transparent",color:tarjetaSelReg===t.id?C.purple:C.t3,fontSize:11,fontWeight:tarjetaSelReg===t.id?700:400,cursor:"pointer"}}>{t.nombre}</button>)}</div></div>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>{QUICK_ITEMS.filter(q=>qTipo==="ingreso"?q.tipo==="ingreso":qTipo==="ahorro"?q.tipo==="ahorro"||q.tipo==="inversion":q.tipo==="gasto").map((q,i)=><button key={i} onClick={()=>{if(qMonto){if(q.tipo==="inversion"){const invId=Date.now()+Math.floor(Math.random()*10000);showToast(`${q.icon} ${fmt(parseFloat(qMonto))}`);setInvModalData({monto:parseFloat(qMonto),mes,año,movId:invId});setShowInvModal(true);}else{addMov(q.cat,q.sub,qMonto,qNota,qTipo==="gasto"?qMetodo:"efectivo");showToast(`${q.icon} ${fmt(parseFloat(qMonto))}${qMetodo==="tarjeta"&&qTipo==="gasto"?" 💳":""}`);}setQMonto("");setQNota("");}}} style={{padding:"10px 4px",borderRadius:10,border:`1px solid ${C.border}`,background:C.card,cursor:"pointer",textAlign:"center"}}><div style={{fontSize:22}}>{q.icon}</div><div style={{fontSize:8,color:C.t3,marginTop:2}}>{q.label}</div></button>)}</div>
-            {tarjetaMes>0&&<button onClick={()=>{const monto=prompt("¿Cuánto pagaste a tu tarjeta?");if(monto&&parseFloat(monto)>0){addMov("Deuda","Pago de tarjeta",monto,"Pago a tarjeta de crédito","pago_tarjeta");showToast("✅ Pago de tarjeta registrado");}}} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.purple}33`,background:C.purple+"10",color:C.purple,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💳 Registrar pago a tarjeta de crédito</button>}
+            {tarjetaMes>0&&<button onClick={()=>setShowPagoTarjetaModal(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.purple}33`,background:C.purple+"10",color:C.purple,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💳 Registrar pago a tarjeta de crédito</button>}
             {inversiones.length>0&&<button onClick={()=>setShowRetiroModal(true)} style={{width:"100%",padding:10,borderRadius:10,border:`1px solid ${C.cyan}33`,background:C.cyan+"10",color:C.cyan,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>💰 Retirar inversión</button>}
             {!hasRegToday&&<button onClick={markNoSpend} style={{width:"100%",padding:10,borderRadius:10,border:`2px dashed ${C.accent}33`,background:"transparent",color:C.accent,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:14}}>✅ Hoy no gasté nada</button>}
           </div>:<Card style={{marginBottom:14}}>
@@ -1156,8 +1190,8 @@ export default function AppPro({ onLogout, onGoCalc }){
             </Card>}
           </div>
         </div>}<div style={{display:"flex",gap:8,marginTop:16}}>
-          <button onClick={()=>{if(confirm("¿Reiniciar presupuesto? Solo se borra el plan, tus movimientos y saldo se conservan.")){setPres({});showToast("Presupuesto reiniciado");}}} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer"}}>Reiniciar presupuesto</button>
-          <button onClick={()=>{if(confirm("¿Reiniciar TODO? Se borrarán presupuesto, movimientos, saldo, deuda y configuración. Esta acción no se puede deshacer.")){setPres({});setGastos([]);setInversiones([]);setProgramados([]);setMetas([]);setSaldoInicial(0);setDeudaTarjetaInicial(0);setDiaCorte(0);setDiaPago(0);setProrateados({});setProrateosRechazados({});setProgramadosPagados({});setOnboarded(false);showToast("Todo reiniciado");}}} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}55`,color:C.danger,fontSize:11,cursor:"pointer",fontWeight:700}}>⚠️ Reiniciar todo</button>
+          <button onClick={()=>setShowConfirmReset("pres")} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}33`,color:C.danger,fontSize:11,cursor:"pointer"}}>Reiniciar presupuesto</button>
+          <button onClick={()=>setShowConfirmReset("todo")} style={{flex:1,padding:10,borderRadius:8,background:"transparent",border:`1px solid ${C.danger}55`,color:C.danger,fontSize:11,cursor:"pointer",fontWeight:700}}>⚠️ Reiniciar todo</button>
         </div></div>}
 
         {tab==="inversiones"&&<div>
